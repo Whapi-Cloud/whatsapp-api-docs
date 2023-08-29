@@ -1,0 +1,4547 @@
+openapi: 3.0.0
+info:
+  contact:
+    name: Whapi Support
+    email: care@whapi.cloud
+    url: https://whapi.cloud/support
+  description: Send and receive messages using HTTP requests based on the
+    unofficial Whatsapp API. Fixed price with no hidden commissions, unlimited
+    messages, no message or dialog fees. The user can send and receive text and
+    media messages through WhatsApp in private or group chats with the endpoints
+    that are created for the user. Moreover, the current status and the screen
+    of the session can be retrieved using these endpoints
+  title: WhatsApp Unofficial API
+  version: 0.1.1
+  termsOfService: https://whapi.cloud/terms
+servers:
+  - url: https://gate.whapi.cloud
+  - url: http://localhost:8000
+security:
+  - bearerAuth: []
+  - tokenAuth: []
+tags:
+  - name: Channel
+    description: The channel is the main entity of the API. It is the entity that
+      represents the user's WhatsApp session
+  - name: Users
+    description: Manage the WhatsApp users related to the channel
+  - name: Messages
+    description: Manage the messages sent and received by the channel
+  - name: Chats
+    description: Manage the chats of the channel
+  - name: Contacts
+    description: Manage the contacts of the channel
+  - name: Groups
+    description: Manage the groups of the channel
+  - name: Media
+    description: Manage the media of the channel
+  - name: Business
+    description: WhatsApp Business Functions
+paths:
+  /health:
+    get:
+      tags:
+        - Channel
+      responses:
+        "200":
+          $ref: "#/components/responses/Health"
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: checkHealth
+      summary: Check health
+  /settings:
+    get:
+      tags:
+        - Channel
+      responses:
+        "200":
+          $ref: "#/components/responses/GetSettings"
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getChannelSettings
+      summary: Get channel settings
+    delete:
+      tags:
+        - Channel
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Settings already reset
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: resetChannelSettings
+      summary: Reset channel settings
+    patch:
+      tags:
+        - Channel
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateSettings"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpdateSettings"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong settings format
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: updateChannelSettings
+      summary: Update channel settings
+      description: If a field is not present in the request, no change is made to that
+        setting. For example, if 'proxy' is not sent with the request, the
+        existing configuration for 'proxy' is unchanged.
+      callbacks:
+        incomingWebhook:
+          "{$request.body#/webhooks[0].url}":
+            post:
+              requestBody:
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/WebhookEvent"
+              responses:
+                "200":
+                  description: OK
+  /users/login:
+    get:
+      tags:
+        - Users
+      requestBody:
+        $ref: "#/components/requestBodies/UserLogin"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserLogin"
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Channel already authenticated
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Render QR failed
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: loginUser
+      summary: Login user with QR-base64
+  /users/login/image:
+    get:
+      tags:
+        - Users
+      requestBody:
+        $ref: "#/components/requestBodies/UserLogin"
+      responses:
+        "200":
+          $ref: "#/components/responses/Image"
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: loginUserImage
+      summary: Login user with QR-image
+  /users/login/rowdata:
+    get:
+      tags:
+        - Users
+      responses:
+        "200":
+          $ref: "#/components/responses/UserLogin"
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Channel already authenticated
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: loginUserRowData
+      summary: Login user with QR-rowdata
+  /users/logout:
+    post:
+      tags:
+        - Users
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Channel already logged out
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: logoutUser
+      summary: Logout user
+  /messages/list:
+    get:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/time_from"
+        - $ref: "#/components/parameters/time_to"
+        - $ref: "#/components/parameters/normal_types"
+        - $ref: "#/components/parameters/author"
+        - $ref: "#/components/parameters/from_me"
+      responses:
+        "200":
+          $ref: "#/components/responses/Messages"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getMessages
+      summary: Get messages
+  "/messages/list/{ChatID}":
+    get:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/ChatID"
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/time_from"
+        - $ref: "#/components/parameters/time_to"
+        - $ref: "#/components/parameters/normal_types"
+        - $ref: "#/components/parameters/author"
+        - $ref: "#/components/parameters/from_me"
+      responses:
+        "200":
+          $ref: "#/components/responses/Messages"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified chat not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getMessagesByChatID
+      summary: Get messages by chat ID
+  /messages/text:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderText"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderText"
+        description: Message text
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request body too large
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageText
+      summary: 💬 Send text message
+  /messages/image:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderImage"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderImage"
+        description: Message image
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageImage
+      summary: 🖼 Send media-image message
+  /messages/video:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderVideo"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderVideo"
+        description: Message video
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageVideo
+      summary: 🎥 Send media-video message
+  /messages/gif:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderGif"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderGif"
+        description: Message gif
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageGif
+      summary: 🎬 Send media-gif message
+  /messages/audio:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderAudio"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderAudio"
+        description: Message audio
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageAudio
+      summary: 🎵 Send media-audio message
+  /messages/voice:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderVoice"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderVoice"
+        description: Message voice
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageVoice
+      summary: 🎤 Send media-voice message
+  /messages/document:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderDocument"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderDocument"
+        description: Message document
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageDocument
+      summary: 📑 Send media-document message
+  /messages/location:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderLocation"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderLocation"
+        description: Message location
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request body too large
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageLocation
+      summary: 📍 Send location message
+  /messages/live_location:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderLiveLocation"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderLiveLocation"
+        description: Message live location
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request body too large
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageLiveLocation
+      summary: 🧭 Send live location message
+  /messages/contact:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderContact"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderContact"
+        description: Message contact
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request body too large
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageContact
+      summary: 👤 Send contact message
+  /messages/contact_list:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderContactList"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderContactList"
+        description: Message contact list
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request body too large
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageContactList
+      summary: 👥 Send contact list message
+  /messages/interactive:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderInteractive"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderInteractive"
+        description: Message interactive
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageInteractive
+      summary: 🎮 Send interactive message
+  /messages/sticker:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderSticker"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderSticker"
+        description: Message sticker
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageSticker
+      summary: 🎭 Send media-sticker message
+  "/messages/media/{MediaMessageType}":
+    post:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/MediaMessageType"
+        - $ref: "#/components/parameters/send_params"
+      requestBody:
+        $ref: "#/components/requestBodies/UploadMedia"
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMediaMessage
+      summary: 📎 Send media message
+      description: |
+        Additional endpoint for easy send media-file as message.
+        Use request body as file and inpath parameters for send parameters.
+        Media message can be one of the following types:
+        - 📷 image
+        - 🎥 video
+        - 🎬 gif
+        - 🎵 audio
+        - 🎤 voice
+        - 📄 document
+        - 🎭 sticker
+  "/messages/{MessageID}":
+    get:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified message not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getMessage
+      summary: Get message
+    post:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForwardMessage"
+        description: Forward message
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for forward message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified message not found
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: forwardMessage
+      summary: ↪ Forward message
+    put:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for mark as read message
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified message not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: markMessageAsRead
+      summary: ✔✔ Mark message as read
+    delete:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for delete message
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified message not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deleteMessage
+      summary: ❌ Delete message
+  "/messages/{MessageID}/reaction":
+    put:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReactToMessage"
+        description: React to message
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for react to message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified message not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: reactToMessage
+      summary: 😍 React to message
+  "/messages/{MessageID}/star":
+    put:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Star"
+        description: Star message
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for star message
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified message not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: starMessage
+      summary: ⭐ Star message
+  /chats:
+    get:
+      tags:
+        - Chats
+      parameters:
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+      responses:
+        "200":
+          $ref: "#/components/responses/Chats"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getChats
+      summary: Get chats
+  "/chats/{ChatID}":
+    get:
+      tags:
+        - Chats
+      parameters:
+        - $ref: "#/components/parameters/ChatID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Chat"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified chat not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getChat
+      summary: Get chat
+    delete:
+      tags:
+        - Chats
+      parameters:
+        - $ref: "#/components/parameters/ChatID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for delete chat
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified chat not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deleteChat
+      summary: ❌ Delete chat
+    post:
+      tags:
+        - Chats
+      parameters:
+        - $ref: "#/components/parameters/ChatID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArchiveChatRequest"
+        description: Request body
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for archive/unarchive chat
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified chat not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: archiveChat
+      summary: 🗄 Archive/Unarchive chat
+    patch:
+      tags:
+        - Chats
+      parameters:
+        - $ref: "#/components/parameters/ChatID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchChatRequest"
+        description: Request body
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for patch chat
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified chat not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: patchChat
+      summary: 📌 Pin/Unpin chat or 🔇 Mute/Unmute chat or ✔✔ Mark as read/unread chat
+  /contacts:
+    get:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+      responses:
+        "200":
+          $ref: "#/components/responses/Contacts"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getContacts
+      summary: Get contacts
+    post:
+      tags:
+        - Contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckContactRequest"
+            example:
+              blocking: wait
+              contacts:
+                - "{{Recipient-WA-ID}}"
+        description: Contact data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckContactResponse"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for check phones
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: checkPhones
+      summary: Check phones
+  "/contacts/{ContactID}":
+    get:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Contact"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getContact
+      summary: Get contact
+    post:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderContactFromPhonebook"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderContactFromPhonebook"
+        description: Message contact
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for add contact
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not found
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendContact
+      summary: Send contact
+    head:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not registered
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: checkExist
+      summary: Check exist
+  /groups:
+    get:
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+      responses:
+        "200":
+          $ref: "#/components/responses/Groups"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getGroups
+      summary: Get groups
+    post:
+      tags:
+        - Groups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+            example:
+              subject: <Group Subject>
+        description: Group data
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewGroup"
+          description: ""
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for add group
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified participant not found in contacts list
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: createGroup
+      summary: Create group
+    put:
+      tags:
+        - Groups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupInvite"
+            example:
+              subject: <Group Subject>
+        description: Group data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewGroup"
+          description: ""
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for accept invite link
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong invite code
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: acceptGroupInvite
+      summary: Accept group invite
+  "/groups/{GroupID}":
+    get:
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Group"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getGroup
+      summary: Get group
+    put:
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      requestBody:
+        description: ""
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGroupInfoRequest"
+            example:
+              subject: <New Group Subject>
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for update group
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: updateGroupInfo
+      summary: Update group info
+    delete:
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for leave group
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: leaveGroup
+      summary: Leave group
+  "/groups/{GroupID}/invite":
+    get:
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupInvite"
+          description: ""
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for create invite link
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getGroupInvite
+      summary: Get group invite
+    delete:
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for delete invite link
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: revokeGroupInvite
+      summary: Revoke group invite
+  "/groups/{GroupID}/participants":
+    delete:
+      requestBody:
+        $ref: "#/components/requestBodies/ListParticipants"
+        required: true
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for remove participant
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: You do not have permissions for this action
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group or participant not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: removeGroupParticipant
+      summary: Remove group participant
+  "/groups/{GroupID}/icon":
+    get:
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Image"
+        "204":
+          description: Group icon not set
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for get group icon
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getGroupIcon
+      summary: Get group icon
+    put:
+      requestBody:
+        $ref: "#/components/requestBodies/UploadImage"
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for set group icon
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: You do not have permissions for this action
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: setGroupIcon
+      summary: Set group icon
+    delete:
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for delete group icon
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: You do not have permissions for this action
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deleteGroupIcon
+      summary: Delete group icon
+  "/groups/{GroupID}/admins":
+    delete:
+      requestBody:
+        $ref: "#/components/requestBodies/ListParticipants"
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for demote group admin
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: You do not have permissions for this action
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group or participant not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: demoteGroupAdmin
+      summary: Demote group admin
+    patch:
+      requestBody:
+        $ref: "#/components/requestBodies/ListParticipants"
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for promote group admin
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: You do not have permissions for this action
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group or participant not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: promoteToGroupAdmin
+      summary: Promote to group admin
+  /media:
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/UploadMedia"
+      tags:
+        - Media
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadMediaResponse"
+          description: ""
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for upload media
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: uploadMedia
+      summary: Upload media
+  "/media/{MediaID}":
+    get:
+      tags:
+        - Media
+      parameters:
+        - $ref: "#/components/parameters/MediaID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Media"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified media not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getMedia
+      summary: Get media
+    delete:
+      tags:
+        - Media
+      parameters:
+        - $ref: "#/components/parameters/MediaID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified media not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deleteMedia
+      summary: Delete media
+  /limits:
+    get:
+      tags:
+        - Channel
+      responses:
+        "200":
+          $ref: "#/components/responses/Limits"
+        "204":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: No limits
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getLimits
+      summary: Get limits
+components:
+  parameters:
+    count:
+      name: count
+      description: Count of objects to return
+      schema:
+        type: number
+        minimum: 1
+        maximum: 500
+        default: 100
+      in: query
+    offset:
+      name: offset
+      description: Offset of objects to return
+      schema:
+        type: number
+        minimum: 0
+      in: query
+    time_from:
+      name: time_from
+      description: Timestamp from which to get objects
+      schema:
+        type: number
+      in: query
+    time_to:
+      name: time_to
+      description: Timestamp up to which to get objects
+      schema:
+        type: number
+      in: query
+    normal_types:
+      name: normal_types
+      description: If false, include system messages
+      schema:
+        type: boolean
+      in: query
+    author:
+      name: author
+      description: To filter by author (Contact ID)
+      schema:
+        $ref: "#/components/schemas/ContactID"
+      in: query
+    from_me:
+      name: from_me
+      description: If true, only return messages sent by the authenticated user. If
+        false, only return messages sent by other users.
+      schema:
+        type: boolean
+      in: query
+    ChatID:
+      name: ChatID
+      style: simple
+      explode: false
+      description: Chat ID
+      schema:
+        $ref: "#/components/schemas/ChatID"
+      in: path
+      required: true
+    MediaMessageType:
+      name: MediaMessageType
+      style: simple
+      explode: false
+      description: Media message type
+      schema:
+        $ref: "#/components/schemas/MediaMessageType"
+      in: path
+      required: true
+    send_params:
+      name: SendParams
+      style: form
+      explode: true
+      description: Send sender parameters via query
+      schema:
+        $ref: "#/components/schemas/SenderMedia"
+      in: query
+      required: true
+    MessageID:
+      name: MessageID
+      style: simple
+      explode: false
+      description: Message ID
+      schema:
+        $ref: "#/components/schemas/MessageID"
+      in: path
+      required: true
+    ContactID:
+      name: ContactID
+      style: simple
+      explode: false
+      description: Contact ID
+      schema:
+        $ref: "#/components/schemas/ContactID"
+      in: path
+      required: true
+    GroupID:
+      name: GroupID
+      style: simple
+      explode: false
+      description: Group ID
+      schema:
+        $ref: "#/components/schemas/GroupID"
+      in: path
+      required: true
+    MediaID:
+      name: MediaID
+      style: simple
+      explode: false
+      description: Media ID
+      schema:
+        $ref: "#/components/schemas/MediaID"
+      in: path
+      required: true
+  requestBodies:
+    UpdateSettings:
+      description: New settings
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Settings"
+          example:
+            callback_backoff_delay_ms: 3000
+            max_callback_backoff_delay_ms: 900000
+            callback_persist: true
+            media:
+              auto_download:
+                - image
+                - document
+                - audio
+            webhooks:
+              - url: <Webhook URL, http or https>
+                events:
+                  - type: ack
+                    method: put
+                  - type: chat
+                    method: put
+                mode: method
+            on_call_pager: <WA_ID of valid WhatsApp contact>
+            pass_through: false
+            sent_status: false
+    UserLogin:
+      description: Parameters for generating QR code
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/QRParameters"
+          example:
+            size: 200
+            width: 300
+            height: 300
+            color_dark: "#000000"
+            color_light: "#ffffff"
+    UploadMedia:
+      content:
+        application/pdf:
+          schema:
+            format: binary
+            type: string
+        application/msword:
+          schema:
+            format: binary
+            type: string
+        application/vnd.ms-powerpoint:
+          schema:
+            format: binary
+            type: string
+        application/vnd.ms-excel:
+          schema:
+            format: binary
+            type: string
+        text/plain:
+          schema:
+            format: binary
+            type: string
+        image/jpeg:
+          schema:
+            format: binary
+            type: string
+        image/png:
+          schema:
+            format: binary
+            type: string
+        audio/acc:
+          schema:
+            format: binary
+            type: string
+        audio/mp4:
+          schema:
+            format: binary
+            type: string
+        audio/amr:
+          schema:
+            format: binary
+            type: string
+        audio/mpeg:
+          schema:
+            format: binary
+            type: string
+        audio/ogg:
+          schema:
+            format: binary
+            type: string
+        codecs=opus:
+          schema:
+            format: binary
+            type: string
+        video/mp4:
+          schema:
+            format: binary
+            type: string
+      required: true
+    ListParticipants:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ListParticipantsRequest"
+          example:
+            participants:
+              - <Recipient WA-ID, from Contacts API>
+      required: true
+    UploadImage:
+      content:
+        image/jpeg:
+          schema:
+            format: binary
+            type: string
+        image/png:
+          schema:
+            format: binary
+            type: string
+      required: true
+  responses:
+    Health:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Health"
+      description: OK
+    Error:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ResponseError"
+      description: Internal Error
+    GetSettings:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Settings"
+      description: OK
+    Success:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ResponseSuccess"
+      description: OK
+    UpdateSettings:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateSettings"
+      description: OK
+    UserLogin:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/QR"
+      description: OK
+    Image:
+      content:
+        image/png:
+          schema:
+            type: string
+            format: binary
+      description: OK
+    Messages:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessagesList"
+      description: OK
+    SentMessage:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SentMessage"
+      description: Created
+    Message:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Message"
+      description: OK
+    Chats:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatsList"
+      description: OK
+    Chat:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Chat"
+      description: OK
+    Contacts:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ContactsList"
+      description: OK
+    Contact:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Contact"
+      description: OK
+    Groups:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GroupsList"
+      description: OK
+    Group:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Group"
+      description: OK
+    Media:
+      content:
+        application/pdf:
+          schema:
+            format: binary
+            type: string
+        application/msword:
+          schema:
+            format: binary
+            type: string
+        application/vnd.ms-powerpoint:
+          schema:
+            format: binary
+            type: string
+        application/vnd.ms-excel:
+          schema:
+            format: binary
+            type: string
+        text/plain:
+          schema:
+            format: binary
+            type: string
+        image/jpeg:
+          schema:
+            format: binary
+            type: string
+        image/png:
+          schema:
+            format: binary
+            type: string
+        audio/acc:
+          schema:
+            format: binary
+            type: string
+        audio/mp4:
+          schema:
+            format: binary
+            type: string
+        audio/amr:
+          schema:
+            format: binary
+            type: string
+        audio/mpeg:
+          schema:
+            format: binary
+            type: string
+        audio/ogg:
+          schema:
+            format: binary
+            type: string
+        codecs=opus:
+          schema:
+            format: binary
+            type: string
+        video/mp4:
+          schema:
+            format: binary
+            type: string
+      description: OK
+    Limits:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Limits"
+      description: OK
+  schemas:
+    ResponseError:
+      title: ResponseError
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/Error"
+      required:
+        - error
+    WebhookEvent:
+      title: Root Type for Webhook-Event
+      description: ""
+      type: object
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookContact"
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        statuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookStatus"
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Error"
+    SenderText:
+      title: Message text send parameters
+      type: object
+      required:
+        - to
+        - body
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessagePropsText"
+        - properties:
+            link_preview:
+              $ref: "#/components/schemas/LinkPreview"
+            typing_time:
+              type: number
+              description: Time in seconds to simulate typing
+              default: 0
+              minimum: 0
+        - $ref: "#/components/schemas/Mentions"
+        - $ref: "#/components/schemas/ViewOnce"
+    SenderImage:
+      title: Message image send parameters
+      type: object
+      required:
+        - to
+        - media
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+        - $ref: "#/components/schemas/Size"
+        - $ref: "#/components/schemas/Mentions"
+        - $ref: "#/components/schemas/ViewOnce"
+    SenderVideo:
+      title: Message video send parameters
+      type: object
+      required:
+        - to
+        - media
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+        - $ref: "#/components/schemas/Size"
+        - $ref: "#/components/schemas/Mentions"
+        - $ref: "#/components/schemas/ViewOnce"
+    SenderGif:
+      title: Message gif send parameters
+      type: object
+      required:
+        - to
+        - media
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+        - $ref: "#/components/schemas/MessagePropsGif"
+        - $ref: "#/components/schemas/Size"
+        - $ref: "#/components/schemas/ViewOnce"
+    SenderAudio:
+      title: Message audio send parameters
+      type: object
+      required:
+        - to
+        - media
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsAudio"
+        - $ref: "#/components/schemas/ViewOnce"
+    SenderVoice:
+      title: Message voice send parameters
+      type: object
+      required:
+        - to
+        - media
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsAudio"
+        - $ref: "#/components/schemas/MessagePropsVoice"
+        - $ref: "#/components/schemas/ViewOnce"
+    SenderDocument:
+      title: Message document send parameters
+      type: object
+      required:
+        - to
+        - media
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsDocument"
+        - $ref: "#/components/schemas/ViewOnce"
+    SenderLocation:
+      title: Message location send parameters
+      type: object
+      required:
+        - to
+        - latitude
+        - longitude
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessageContentLocation"
+    SenderLiveLocation:
+      title: Message live location send parameters
+      type: object
+      required:
+        - to
+        - latitude
+        - longitude
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessageContentLocation"
+    SenderContact:
+      title: Message contact send parameters
+      type: object
+      required:
+        - to
+        - vcard
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessageContentContact"
+    SenderContactList:
+      title: Message contact list send parameters
+      type: object
+      required:
+        - to
+        - contacts
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessageContentContacts"
+    SenderInteractive:
+      title: Message interactive send parameters
+      type: object
+      required:
+        - to
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessagePropsInteractive"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/ViewOnce"
+    SenderSticker:
+      title: Message sticker send parameters
+      type: object
+      required:
+        - to
+        - media
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsSticker"
+        - $ref: "#/components/schemas/Size"
+        - $ref: "#/components/schemas/ViewOnce"
+    ForwardMessage:
+      title: Forward message parameters
+      required:
+        - to
+      type: object
+      properties:
+        to:
+          type: string
+          description: Chat ID or phone number where the message will be forwarded
+          pattern: ^[\d-]{10,31}(@[\w\.]{1,})?$
+        force:
+          type: boolean
+          description: Force forward message
+    ReactToMessage:
+      title: React to message
+      type: object
+      required:
+        - emoji
+      properties:
+        emoji:
+          $ref: "#/components/schemas/Emoji"
+    Star:
+      title: Starred Messages
+      type: object
+      properties:
+        starred:
+          type: boolean
+          description: Indicates if the message is starred or not
+          example: true
+    ArchiveChatRequest:
+      title: Archive chat request parameters
+      type: object
+      properties:
+        archive:
+          type: boolean
+          description: Archive or unarchive chat
+          example: true
+    PatchChatRequest:
+      title: Patch chat request parameters
+      type: object
+      properties:
+        pin:
+          type: boolean
+          description: Pin or unpin chat
+          example: true
+        mute_until:
+          type: integer
+          description: Mute chat until. 0 - unmute chat
+          example: 0
+        mark_unread:
+          type: boolean
+          description: Mark as unread/read chat
+          example: true
+    CheckContactRequest:
+      title: Check contact request
+      required:
+        - contacts
+      type: object
+      properties:
+        blocking:
+          description: Blocking determines whether the request should wait for the
+            processing to complete (synchronous) or not (asynchronous).
+          default: no_wait
+          enum:
+            - no_wait
+            - wait
+          type: string
+        contacts:
+          description: Array of contact phone numbers. The numbers can be in any standard
+            telephone number format.
+          type: array
+          items:
+            type: string
+        force_check:
+          description: Force check determines whether the request should check the contact
+            even if it is already in the cache.
+          default: false
+          type: boolean
+    CheckContactResponse:
+      title: Check contact response
+      description: ""
+      type: object
+      allOf:
+        - type: object
+          properties:
+            contacts:
+              type: array
+              items:
+                $ref: "#/components/schemas/CheckContact"
+    SenderContactFromPhonebook:
+      title: Message contact from phonebook send parameters
+      type: object
+      required:
+        - to
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - properties:
+            name:
+              description: Name of contact
+              type: string
+    CreateGroupRequest:
+      title: Create group request
+      required:
+        - subject
+      type: object
+      allOf:
+        - type: object
+          properties:
+            subject:
+              type: string
+        - $ref: "#/components/schemas/Participants"
+    NewGroup:
+      title: New group
+      type: object
+      required:
+        - group_id
+      properties:
+        group_id:
+          $ref: "#/components/schemas/GroupID"
+    GroupInvite:
+      title: Group invite
+      description: ""
+      type: object
+      required:
+        - invite_code
+      properties:
+        invite_code:
+          type: string
+    UpdateGroupInfoRequest:
+      title: Update group info request
+      required:
+        - subject
+        - description
+      type: object
+      properties:
+        subject:
+          type: string
+        description:
+          type: string
+    UploadMediaResponse:
+      title: Upload media response
+      description: ""
+      type: object
+      properties:
+        media:
+          type: array
+          items:
+            $ref: "#/components/schemas/UploadMedia"
+    ContactID:
+      type: string
+      description: Contact ID
+      pattern: ^([\d]{7,15})?$
+    ChatID:
+      type: string
+      description: Chat ID
+      pattern: ^[\d-]{10,31}@[\w\.]{1,}$
+    GroupID:
+      type: string
+      description: Group ID
+      pattern: ^[\d-]{10,31}@g\.us$
+    MediaID:
+      type: string
+      description: Media ID
+      pattern: ^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$
+    MediaMessageType:
+      type: string
+      description: Media message type
+      enum:
+        - image
+        - video
+        - gif
+        - audio
+        - voice
+        - document
+        - sticker
+    MessageID:
+      type: string
+      description: Message ID
+      pattern: ^[0-9A-F]{10,32}$
+    SenderMedia:
+      title: Sender media
+      type: object
+      required:
+        - to
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - oneOf:
+            - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+            - $ref: "#/components/schemas/MessagePropsGif"
+            - $ref: "#/components/schemas/MessagePropsSticker"
+            - $ref: "#/components/schemas/MessagePropsDocument"
+            - $ref: "#/components/schemas/MessagePropsAudio"
+            - $ref: "#/components/schemas/MessagePropsVoice"
+        - $ref: "#/components/schemas/Size"
+        - $ref: "#/components/schemas/Mentions"
+        - $ref: "#/components/schemas/ViewOnce"
+    ListParticipantsRequest:
+      title: List participants request
+      required:
+        - participants
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Participants"
+    Settings:
+      title: Channel Settings
+      type: object
+      properties:
+        callback_backoff_delay_ms:
+          description: Backoff delay for a failed callback in milliseconds This setting is
+            used to configure the amount of time the backoff delays before
+            retrying a failed callback. The backoff delay increases linearly by
+            this value each time a callback fails to get a HTTPS 200 OK
+            response. The backoff delay is capped by the
+            max_callback_backoff_delay_ms setting.
+          default: 3000
+          type: number
+        max_callback_backoff_delay_ms:
+          description: Maximum delay for a failed callback in milliseconds
+          default: 900000
+          type: number
+        callback_persist:
+          description: Stores callbacks on disk until they are successfully acknowledged
+            by the Webhook or not. Restart required.
+          default: true
+          type: boolean
+        media:
+          $ref: "#/components/schemas/MediaSettings"
+        webhooks:
+          $ref: "#/components/schemas/Webhooks"
+        on_call_pager:
+          description: Set to valid WhatsApp Group with users who wish to see alerts for
+            critical errors and messages.
+          type: string
+        pass_through:
+          description: When true, removes messages from the local database after they are
+            delivered to or read by the recipient. When false, saves all
+            messages on local storage until they are explicitly deleted. When
+            messages are sent, they are stored in a local database. This
+            database is used as the application's history. Since the business
+            keeps its own history, you can specify whether you want message
+            pass_through or not. Restart required.
+          default: true
+          type: boolean
+        sent_status:
+          description: Receive a notification that a message is sent to server. When true,
+            you will receive a message indicating that a message has been sent.
+            If false (default), you will not receive notification.
+          default: false
+          type: boolean
+        proxy:
+          description: Set to valid WhatsApp Group with users who wish to see alerts for
+            critical errors and messages.
+          type: string
+    QRParameters:
+      title: QR code parameters
+      type: object
+      properties:
+        size:
+          type: integer
+          description: Size of QR code
+          default: 264
+        width:
+          type: integer
+          description: Width of QR code canvas
+          default: 300
+        height:
+          type: integer
+          description: Height of QR code canvas
+          default: 300
+        color_dark:
+          type: string
+          description: Color of dark pixels
+          default: "#122e31"
+        color_light:
+          type: string
+          description: Color of light pixels
+          default: "#ffffff"
+    Chat:
+      title: Chat
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          $ref: "#/components/schemas/ChatID"
+        name:
+          type: string
+          description: Chat name
+          example: Chat name
+        type:
+          type: string
+          description: Chat type
+          example: group
+          enum:
+            - group
+            - contact
+            - broadcast
+        timestamp:
+          type: integer
+          description: Chat timestamp
+          example: 1675964377
+        chat_pic:
+          type: string
+          description: Chat picture URL
+          example: https://example.com/photo.jpg
+        pin:
+          type: boolean
+          description: Is chat pinned
+          example: true
+        mute:
+          type: boolean
+          description: Is chat muted
+          example: true
+        mute_until:
+          type: integer
+          description: Chat mute until
+          example: 0
+        archive:
+          type: boolean
+          description: Is chat archived
+          example: true
+        unread:
+          type: integer
+          description: Unread messages count
+          example: 0
+        unread_mention:
+          type: boolean
+          description: Is chat unread mention
+          example: false
+        read_only:
+          type: boolean
+          description: Is chat read only
+          example: false
+        not_spam:
+          type: boolean
+          description: Is chat not spam
+          example: true
+        last_message:
+          $ref: "#/components/schemas/Message"
+    ChatsList:
+      title: List of chats
+      type: object
+      allOf:
+        - type: object
+          properties:
+            chats:
+              $ref: "#/components/schemas/Chats"
+        - $ref: "#/components/schemas/Iterator"
+    Contact:
+      title: WA Contact
+      type: object
+      properties:
+        id:
+          type: string
+          description: WA ID
+        name:
+          type: string
+          description: Contact title from contact book
+        pushname:
+          type: string
+          description: Account name from WA or WA Business name
+        is_business:
+          type: boolean
+          description: Is a business account
+        profile_pic:
+          type: string
+          description: Profile picture URL
+        status:
+          type: string
+          description: Contact status
+      required:
+        - id
+        - name
+    ContactsList:
+      title: List of contacts
+      type: object
+      allOf:
+        - type: object
+          properties:
+            contacts:
+              $ref: "#/components/schemas/Contacts"
+        - $ref: "#/components/schemas/Iterator"
+    Group:
+      title: Group
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - participants
+      allOf:
+        - $ref: "#/components/schemas/Chat"
+        - properties:
+            name:
+              type: string
+              description: Group name
+              example: Group name
+            description:
+              type: string
+              description: Group description
+              example: Group description
+            participants:
+              type: array
+              description: Group participants
+              items:
+                $ref: "#/components/schemas/Participant"
+            created_at:
+              type: integer
+              description: Group creation timestamp
+              example: 1675964377
+            created_by:
+              $ref: "#/components/schemas/ContactID"
+            suspended:
+              type: boolean
+              description: Is group suspended
+              example: false
+            terminated:
+              type: boolean
+              description: Is group terminated
+              example: false
+            is_parent:
+              type: boolean
+              description: Is group parent
+              example: false
+            is_default_subgroup:
+              type: boolean
+              description: Is group default subgroup
+              example: false
+    GroupsList:
+      title: List of groups
+      type: object
+      allOf:
+        - type: object
+          properties:
+            groups:
+              $ref: "#/components/schemas/Groups"
+        - $ref: "#/components/schemas/Iterator"
+    Health:
+      title: Health response
+      type: object
+      properties:
+        start_at:
+          type: number
+          description: Date timestamp when channel started on the server.
+        uptime:
+          type: number
+          description: Seconds have passed since the start of the instance.
+        status:
+          $ref: "#/components/schemas/ChannelStatus"
+        user:
+          $ref: "#/components/schemas/Contact"
+      required:
+        - start_at
+        - uptime
+        - status
+    Limits:
+      title: Trial limits
+      type: object
+      properties:
+        messages:
+          type: integer
+          description: Maximum number of messages that can be sent
+          example: 100
+        chats:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatID"
+          description: List of chat IDs that can be used
+        checks:
+          type: integer
+          description: Maximum number of check phone numbers
+          example: 100
+      required:
+        - messages
+        - chats
+        - checks
+    Message:
+      title: Message
+      required:
+        - id
+        - type
+        - chat_id
+        - from_me
+        - timestamp
+      type: object
+      properties:
+        id:
+          type: string
+          description: Message ID
+        type:
+          $ref: "#/components/schemas/MessageType"
+        subtype:
+          type: string
+          description: Message subtype
+        chat_id:
+          type: string
+          description: Chat ID
+        from:
+          description: WhatsApp ID of the sender
+          type: string
+        from_me:
+          type: boolean
+          description: Is message from me
+        from_name:
+          type: string
+          description: Pushname of the sender
+        timestamp:
+          type: number
+          description: Message timestamp
+        status:
+          $ref: "#/components/schemas/MessageStatus"
+        text:
+          $ref: "#/components/schemas/MessageContentText"
+        image:
+          $ref: "#/components/schemas/MessageContentImage"
+        video:
+          $ref: "#/components/schemas/MessageContentVideo"
+        gif:
+          $ref: "#/components/schemas/MessageContentVideo"
+        audio:
+          $ref: "#/components/schemas/MessageContentAudio"
+        voice:
+          $ref: "#/components/schemas/MessageContentAudio"
+        document:
+          $ref: "#/components/schemas/MessageContentDocument"
+        sticker:
+          $ref: "#/components/schemas/MessageContentSticker"
+        location:
+          $ref: "#/components/schemas/MessageContentLocation"
+        live_location:
+          $ref: "#/components/schemas/MessageContentLiveLocation"
+        contact:
+          $ref: "#/components/schemas/MessageContentContact"
+        contact_list:
+          $ref: "#/components/schemas/MessageContentContacts"
+        interactive:
+          $ref: "#/components/schemas/MessageContentInteractive"
+        system:
+          $ref: "#/components/schemas/MessageContentSystem"
+        order:
+          $ref: "#/components/schemas/MessageContentOrder"
+        product_items:
+          $ref: "#/components/schemas/MessageContentProductItems"
+        action:
+          $ref: "#/components/schemas/MessageAction"
+        context:
+          $ref: "#/components/schemas/MessageContext"
+        reactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageReaction"
+          description: Reactions for message
+    MessagesList:
+      title: List of messages
+      type: object
+      properties:
+        messages:
+          $ref: "#/components/schemas/Messages"
+        count:
+          type: integer
+          format: int32
+          description: Count of requested messages
+          default: 100
+        total:
+          type: integer
+          format: int32
+          description: Total number of returned messages
+        offset:
+          type: integer
+          format: int32
+          description: Offset of requested messages
+          default: 0
+    SentMessage:
+      title: Sent message
+      type: object
+      required:
+        - sent
+      properties:
+        sent:
+          type: boolean
+          description: Message sent
+          example: true
+        message:
+          $ref: "#/components/schemas/Message"
+    ResponseSuccess:
+      title: ResponseSuccess
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - result
+    UpdateSettings:
+      title: Update settings
+      type: object
+      required:
+        - before_update
+        - after_update
+        - changes
+      properties:
+        before_update:
+          $ref: "#/components/schemas/Settings"
+        after_update:
+          $ref: "#/components/schemas/Settings"
+        changes:
+          type: array
+          items:
+            type: string
+            enum:
+              - callback_backoff_delay_ms
+              - max_callback_backoff_delay_ms
+              - callback_persist
+              - media
+              - webhooks
+              - on_call_pager
+              - pass_through
+              - sent_status
+    QR:
+      title: QR code
+      type: object
+      properties:
+        status:
+          type: string
+          description: Status of the QR code
+          enum:
+            - OK
+            - TIMEOUT
+            - WAITING
+            - ERROR
+        base64:
+          type: string
+          description: Base64 encoded QR code
+        rowdata:
+          type: string
+          description: Rowdata for generating the QR code
+        expire:
+          type: number
+          description: Seconds until the QR code expires
+      required:
+        - status
+    Chats:
+      title: Chats
+      type: array
+      items:
+        $ref: "#/components/schemas/Chat"
+    Iterator:
+      title: Iterator parameters
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int32
+          description: Count of requested chats
+          default: 20
+        total:
+          type: integer
+          format: int32
+          description: Total number of returned chats
+        offset:
+          type: integer
+          format: int32
+          description: Offset of requested chats
+          default: 0
+    CheckContact:
+      title: Check contact
+      description: ""
+      type: object
+      properties:
+        input:
+          description: The value you sent in the contacts field of the JSON request.
+          type: string
+        status:
+          description: Status of the user.
+          enum:
+            - valid
+            - invalid
+          type: string
+        wa_id:
+          description: WhatsApp user identifier that can be used in other API calls. Only
+            returned if the status is valid.
+          type: string
+    Contacts:
+      title: Contacts
+      type: array
+      items:
+        $ref: "#/components/schemas/Contact"
+    Participants:
+      title: Participants list
+      type: object
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContactID"
+    Participant:
+      title: Participant
+      type: object
+      required:
+        - id
+        - rank
+      properties:
+        id:
+          $ref: "#/components/schemas/ContactID"
+        rank:
+          type: string
+          description: Participant rank
+          example: admin
+          enum:
+            - admin
+            - member
+            - creator
+    Groups:
+      title: Groups
+      type: array
+      items:
+        $ref: "#/components/schemas/Group"
+    ChannelStatus:
+      title: Channel status
+      type: object
+      properties:
+        code:
+          type: number
+          description: Status code
+        text:
+          type: string
+          description: Status text
+          enum:
+            - NOT_INIT
+            - INIT
+            - LAUNCH
+            - QR
+            - AUTH
+            - ERROR
+          x-enum-descriptions:
+            - Not initialized
+            - Initialized
+            - Launched
+            - Scan QR code
+            - Authorize
+            - Error
+      required:
+        - code
+        - text
+    MessageType:
+      default: text
+      type: string
+      description: Message type
+      enum:
+        - text
+        - image
+        - video
+        - gif
+        - audio
+        - voice
+        - document
+        - location
+        - live_location
+        - contact
+        - contact_list
+        - sticker
+        - system
+        - call
+        - unknown
+        - action
+        - group_invite
+        - product
+        - interactive
+        - reply
+        - poll
+        - hsm
+    MessageStatus:
+      type: string
+      description: Message ack status
+      enum:
+        - failed
+        - pending
+        - sent
+        - delivered
+        - read
+        - played
+        - deleted
+      x-enum-descriptions:
+        - Message failed to send (Red error triangle in WhatsApp Mobile)
+        - Message pending to send (One clock in WhatsApp Mobile)
+        - Message received by WhatsApp server (One checkmark in WhatsApp Mobile)
+        - Message delivered to recipient (Two checkmarks in WhatsApp Mobile)
+        - Message read by recipient (Two blue checkmarks in WhatsApp Mobile)
+        - Voice-message played by recipient (Two blue checkmarks in WhatsApp
+          Mobile)
+        - Message deleted by the user
+    MessageContentText:
+      title: Content text message
+      description: ""
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/MessagePropsText"
+        - $ref: "#/components/schemas/ActionButtons"
+        - $ref: "#/components/schemas/ActionList"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentImage:
+      title: Content image message
+      type: object
+      required:
+        - id
+      allOf:
+        - $ref: "#/components/schemas/MessageContentMedia"
+        - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+        - $ref: "#/components/schemas/ActionButtons"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentVideo:
+      title: Content video message
+      type: object
+      required:
+        - id
+      allOf:
+        - $ref: "#/components/schemas/MessageContentMedia"
+        - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+        - properties:
+            seconds:
+              description: Optional. For video files, this field indicates the duration of the
+                video file in seconds.
+              type: integer
+              format: int32
+            autoplay:
+              description: Optional. If the media is a GIF, this field indicates whether the
+                GIF should be played automatically when the message is received.
+              type: boolean
+        - $ref: "#/components/schemas/ActionButtons"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentAudio:
+      title: Content audio message
+      type: object
+      required:
+        - id
+      allOf:
+        - $ref: "#/components/schemas/MessageContentMedia"
+        - $ref: "#/components/schemas/MessagePropsVoice"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentDocument:
+      title: Content document message
+      type: object
+      required:
+        - id
+      allOf:
+        - $ref: "#/components/schemas/MessageContentMedia"
+        - $ref: "#/components/schemas/MessagePropsDocument"
+        - properties:
+            page_count:
+              description: Optional. Number of pages
+              type: integer
+            preview:
+              description: Optional. Base64 encoded preview of the media. In JPEG format.
+              type: string
+        - $ref: "#/components/schemas/ActionButtons"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentSticker:
+      title: Content sticker message
+      type: object
+      required:
+        - id
+      allOf:
+        - $ref: "#/components/schemas/MessageContentMedia"
+        - $ref: "#/components/schemas/MessagePropsSticker"
+        - properties:
+            preview:
+              description: Optional. Base64 encoded preview of the media. In PNG format.
+              type: string
+        - $ref: "#/components/schemas/Size"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentLocation:
+      title: Content location message
+      type: object
+      required:
+        - latitude
+        - longitude
+      allOf:
+        - properties:
+            latitude:
+              format: double
+              description: Latitude of location being sent
+              type: number
+            longitude:
+              format: double
+              description: Longitude of location being sent
+              type: number
+            address:
+              description: Address of the location
+              type: string
+            name:
+              description: Name of the location
+              type: string
+            url:
+              description: URL for the website where the user downloaded the location
+                information
+              type: string
+            preview:
+              description: Optional. Base64 encoded preview of the media. In JPEG format.
+              type: string
+            accuracy:
+              description: Accuracy of the location in meters
+              type: integer
+              format: int32
+            speed:
+              description: Speed of the location in meters per second
+              type: integer
+              format: int32
+            degrees:
+              description: Degrees clockwise from true north
+              type: integer
+              format: int32
+            comment:
+              description: Optional. Comment for the location
+              type: string
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentLiveLocation:
+      title: Content live location message
+      type: object
+      required:
+        - latitude
+        - longitude
+      allOf:
+        - properties:
+            latitude:
+              format: double
+              description: Latitude of live location being sent
+              type: number
+            longitude:
+              format: double
+              description: Longitude of live location being sent
+              type: number
+            accuracy:
+              description: Accuracy of the live location in meters
+              type: integer
+              format: int32
+            speed:
+              description: Speed of the live location in meters per second
+              type: integer
+              format: int32
+            degrees:
+              description: Degrees clockwise from true north
+              type: integer
+              format: int32
+            caption:
+              description: Optional. Text caption under the live location
+              type: string
+            sequence_number:
+              description: Optional. Sequence number of the live location for event tracking
+              type: integer
+              format: int64
+            time_offset:
+              description: Optional. Time offset of the live location
+              type: number
+            preview:
+              description: Optional. Base64 encoded preview of the media. In JPEG format.
+              type: string
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentContact:
+      title: Content contact message
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/VCard"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentContacts:
+      title: Content contacts message
+      type: object
+      allOf:
+        - properties:
+            list:
+              type: array
+              items:
+                $ref: "#/components/schemas/VCard"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentInteractive:
+      title: Message content interactive
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/MessagePropsInteractive"
+        - $ref: "#/components/schemas/MessageContentMedia"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentSystem:
+      title: Message content interactive
+      type: object
+      properties:
+        body:
+          type: string
+          description: Message body
+    MessageContentOrder:
+      title: Message content order
+      type: object
+      properties:
+        catalog_id:
+          type: string
+          description: Catalog ID
+        product_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductItem"
+        text:
+          type: string
+          description: Message body
+    MessageContentProductItems:
+      title: Message content product items
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type of interactive
+          enum:
+            - list
+            - buttons
+    MessageAction:
+      title: Message action
+      type: object
+      properties:
+        target:
+          description: Target message ID
+          type: string
+        type:
+          description: Type of action
+          type: string
+          enum:
+            - delete
+            - reaction
+        emoji:
+          description: Action emoji for reaction
+          type: string
+    MessageContext:
+      title: Message context
+      description: ""
+      type: object
+      properties:
+        forwarded:
+          type: boolean
+          description: Is forwarding message
+        forwarding_score:
+          type: integer
+          format: int32
+          description: Count fo forwarding message
+        mentions:
+          type: array
+          items:
+            type: string
+          description: Whatsapp IDs of mentioned users
+        quoted_id:
+          type: string
+          description: ID of quoted message
+        quoted_type:
+          $ref: "#/components/schemas/MessageType"
+        quoted_content:
+          $ref: "#/components/schemas/MessageContent"
+        quoted_author:
+          type: string
+          description: Whatsapp ID of quoted message author
+    MessageReaction:
+      title: Message reactions
+      type: object
+      required:
+        - id
+        - text
+      properties:
+        id:
+          type: string
+          description: Reaction ID
+        emoji:
+          $ref: "#/components/schemas/Emoji"
+        group_key:
+          type: string
+          description: Reaction group key
+        t:
+          type: number
+          description: Reaction timestamp
+        unread:
+          type: boolean
+          description: Is reaction unread
+    MessageContentMedia:
+      title: Content image message
+      type: object
+      required:
+        - id
+        - mime_type
+        - file_size
+      properties:
+        id:
+          $ref: "#/components/schemas/MediaID"
+        link:
+          description: Optional. Link to media
+          type: string
+        mime_type:
+          description: Mime type of media
+          type: string
+        file_size:
+          description: File size in bytes
+          type: integer
+          format: int64
+        sha256:
+          description: Checksum
+          type: string
+    MessagePropsVoice:
+      title: Message gif unique parameters
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/MessagePropsAudio"
+        - properties:
+            recording_time:
+              type: number
+              description: Time in seconds to simulate recording voice
+              default: 0
+              minimum: 0
+    ViewOnce:
+      title: View once
+      type: object
+      properties:
+        view_once:
+          type: boolean
+          description: Is view once
+    VCard:
+      title: VCard
+      type: object
+      required:
+        - name
+        - vcard
+      properties:
+        name:
+          description: Name of contact
+          type: string
+        vcard:
+          description: Vcard of contact
+          type: string
+    MessagePropsDocument:
+      title: Message document unique parameters
+      type: object
+      properties:
+        caption:
+          description: Optional. Text caption under the document.
+          type: string
+        filename:
+          description: Optional. File name
+          type: string
+    ActionButtons:
+      title: Buttons
+      type: object
+      properties:
+        buttons:
+          type: array
+          items:
+            $ref: "#/components/schemas/Button"
+    MessagePropsImageOrVideo:
+      title: Message image or video unique parameters
+      type: object
+      allOf:
+        - properties:
+            caption:
+              description: Optional. Text caption under the media.
+              type: string
+            preview:
+              description: Optional. Base64 encoded preview of the media. In JPEG format.
+              type: string
+        - $ref: "#/components/schemas/Size"
+    MessagePropsInteractive:
+      title: Message interactive unique parameters
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/InteractiveType"
+        header:
+          type: object
+          description: Header of interactive message (required for type product_list)
+          properties:
+            type:
+              $ref: "#/components/schemas/HeaderType"
+            text:
+              type: string
+              description: Text of header
+            image:
+              type: string
+              description: Image of header (for sending use media parameter)
+            video:
+              type: string
+              description: Image of header (for sending use media parameter)
+            document:
+              type: string
+              description: Image of header (for sending use media parameter)
+        body:
+          type: object
+          description: Body of interactive
+          properties:
+            text:
+              type: string
+              description: Text of body
+        footer:
+          type: object
+          description: Footer of interactive
+          properties:
+            text:
+              type: string
+              description: Text of footer
+        action:
+          $ref: "#/components/schemas/ActionButtons"
+    ProductItem:
+      title: Product item
+      type: object
+      properties:
+        product_retailer_id:
+          description: Product ID
+          type: string
+        quantity:
+          description: Quantity
+          type: integer
+        item_price:
+          description: Item price
+          type: number
+        currency:
+          description: Currency
+          type: string
+          enum:
+            - USD
+            - EUR
+            - GBP
+            - RUB
+            - UAH
+            - BYN
+            - KZT
+            - KGS
+            - AMD
+            - AZN
+            - GEL
+            - MDL
+            - TJS
+            - TMT
+            - UZS
+            - CNY
+            - JPY
+            - CHF
+            - CZK
+            - DKK
+            - ISK
+            - NOK
+            - SEK
+            - HRK
+            - HUF
+            - PLN
+            - RON
+            - TRY
+            - BGN
+            - INR
+            - IDR
+            - MYR
+            - PHP
+            - SGD
+            - THB
+            - VND
+            - MXN
+            - ARS
+            - CLP
+            - COP
+            - PEN
+            - PYG
+            - UYU
+            - BOB
+            - BRL
+            - CRC
+            - DOP
+            - GTQ
+            - HNL
+            - NIO
+            - PAB
+            - SVC
+            - AUD
+            - NZD
+            - ILS
+            - ZAR
+            - BHD
+            - EGP
+            - JOD
+            - KWD
+            - LBP
+            - OMR
+            - QAR
+            - SAR
+            - AED
+            - AFN
+            - ALL
+            - DZD
+            - AOA
+            - AWG
+            - BSD
+            - BDT
+            - BBD
+            - BZD
+            - BMD
+            - BTN
+            - BAM
+            - BWP
+            - BND
+            - BIF
+            - KHR
+            - CAD
+            - CVE
+            - KYD
+            - KMF
+            - CDF
+            - CUP
+            - CZ
+    MessagePropsSticker:
+      title: Message sticker unique parameters
+      type: object
+      allOf:
+        - properties:
+            animated:
+              description: Optional. For stickers, this field indicates whether the sticker is
+                animated.
+              type: boolean
+        - $ref: "#/components/schemas/Size"
+    Size:
+      title: Size
+      type: object
+      properties:
+        width:
+          description: Width of the media in pixels
+          type: integer
+          format: int32
+        height:
+          description: Height of the media in pixels
+          type: integer
+          format: int32
+    MessagePropsText:
+      title: Message text unique parameters
+      type: object
+      required:
+        - body
+      properties:
+        body:
+          description: Message text
+          type: string
+    ActionList:
+      title: List of messages
+      type: object
+      properties:
+        sections:
+          description: Section of the message
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                description: Title of the section
+                type: string
+              rows:
+                description: Rows of the section
+                type: array
+                items:
+                  type: object
+                  properties:
+                    title:
+                      description: Title of the row
+                      type: string
+                    description:
+                      description: Description of the row
+                      type: string
+                    id:
+                      description: Row ID
+                      type: string
+              product_items:
+                description: Product items of the section
+                type: array
+                items:
+                  type: object
+                  properties:
+                    catalog_id:
+                      description: Catalog ID
+                      type: string
+                    product_retailer_id:
+                      description: Product retailer ID
+                      type: string
+        button:
+          description: Button text for list of message
+          type: string
+    MessageContent:
+      title: Message content
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/MessageContentText"
+        - $ref: "#/components/schemas/MessageContentImage"
+        - $ref: "#/components/schemas/MessageContentVideo"
+        - $ref: "#/components/schemas/MessageContentAudio"
+        - $ref: "#/components/schemas/MessageContentDocument"
+        - $ref: "#/components/schemas/MessageContentSticker"
+        - $ref: "#/components/schemas/MessageContentLocation"
+        - $ref: "#/components/schemas/MessageContentLiveLocation"
+        - $ref: "#/components/schemas/MessageContentContact"
+        - $ref: "#/components/schemas/MessageContentContacts"
+        - $ref: "#/components/schemas/MessageContentInteractive"
+        - $ref: "#/components/schemas/MessageContentReply"
+    InteractiveType:
+      default: text
+      type: string
+      description: Interactive type
+      enum:
+        - list
+        - button
+        - product
+    HeaderType:
+      default: text
+      type: string
+      description: Interactive type
+      enum:
+        - text
+        - image
+        - video
+        - document
+    MessagePropsAudio:
+      title: Message audio unique parameters
+      type: object
+      properties:
+        seconds:
+          description: Optional. For audio files, this field indicates the duration of the
+            audio file in seconds.
+          type: integer
+          format: int32
+    Emoji:
+      type: string
+      description: Reaction text
+    Messages:
+      title: Messages
+      type: array
+      items:
+        $ref: "#/components/schemas/Message"
+    Error:
+      title: Error
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          format: int32
+          description: See the https://whapi.cloud/docs/whatsapp/api/errors for more
+            information.
+          type: integer
+        message:
+          description: error message
+          type: string
+        details:
+          description: error detail
+          type: string
+        href:
+          description: location for error detail
+          type: string
+        support:
+          description: support contact
+          type: string
+    Sender:
+      title: Send message parameters
+      required:
+        - to
+      type: object
+      properties:
+        to:
+          type: string
+          description: Chat ID or phone number where the message will be sent
+          pattern: ^[\d-]{10,31}(@[\w\.]{1,})?$
+          example: 1234567891@s.whatsapp.net
+        quoted:
+          type: string
+          description: Message ID of the message to be quoted
+          pattern: ^[0-9A-F]{10,32}$
+        ephemeral:
+          type: integer
+          description: Time in seconds for the message to be deleted
+          minimum: 1
+          maximum: 604800
+    SendMedia:
+      title: Message media file parameters for send
+      description: >
+        Media file to send. You can use preuploaded file or upload file on
+        the fly. 
+
+        Use preupload files if you want to send same file to multiple chats and
+
+        so as not to disturb the order of messages.
+      type: object
+      required:
+        - media
+      properties:
+        media:
+          oneOf:
+            - $ref: "#/components/schemas/MediaWithUploadFromFile"
+            - $ref: "#/components/schemas/MediaWithUploadFromUrl"
+            - $ref: "#/components/schemas/MediaWithUploadFromBase64"
+            - $ref: "#/components/schemas/MediaWithoutUpload"
+        mime_type:
+          description: Mime type of media
+          type: string
+    MessagePropsGif:
+      title: Message gif unique parameters
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+        - properties:
+            autoplay:
+              description: Optional. This field indicates whether the GIF should be played
+                automatically when the message is received.
+              type: boolean
+    Mentions:
+      title: Mentions
+      type: object
+      properties:
+        mentions:
+          type: array
+          items:
+            type: string
+            pattern: ^\d{10,15}@s\.whatsapp\.net$
+          description: Whatsapp IDs of mentioned users
+    LinkPreview:
+      title: Preview link send parameters
+      description: If 'body' contains a link, this parameter can be used to create
+        custom preview link
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of the link
+        description:
+          type: string
+          description: Description of the link
+        base64:
+          type: string
+          description: Base64 encoded image. In JPEG format
+    MediaWithUploadFromFile:
+      title: Media with upload from file
+      description: File to upload
+      type: string
+      format: binary
+    MediaWithUploadFromUrl:
+      title: Media with upload from URL
+      description: Media file URL for upload
+      type: string
+    MediaWithUploadFromBase64:
+      title: Media with upload from base64
+      description: Base64 encoded file to upload
+      type: string
+    MediaWithoutUpload:
+      title: Media without upload
+      description: Media file ID
+      type: string
+    MediaSettings:
+      title: Media
+      required:
+        - auto_download
+      type: object
+      properties:
+        auto_download:
+          description: An array specifying which types of media to automatically download.
+          type: array
+          items:
+            enum:
+              - image
+              - audio
+              - voice
+              - video
+              - document
+            type: string
+    Webhooks:
+      title: Webhooks
+      type: array
+      items:
+        $ref: "#/components/schemas/Webhook"
+    UploadMedia:
+      title: Uploaded media
+      description: ""
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/MediaID"
+    WebhookContact:
+      title: Root Type for Webhook-Contact
+      description: ""
+      type: object
+      properties:
+        profile:
+          $ref: "#/components/schemas/WebhookContactProfile"
+        wa_id:
+          description: The WhatsApp ID of the contact
+          type: string
+    WebhookStatus:
+      title: Root Type for Webhook-Status
+      description: ""
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Error"
+        id:
+          description: Message ID from event
+          type: string
+        recipient_id:
+          description: WhatsApp ID of recipient
+          type: string
+        status:
+          $ref: "#/components/schemas/MessageStatus"
+        timestamp:
+          description: Timestamp of the status message
+          type: string
+    Webhook:
+      title: Webhook
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          description: Inbound and outbound notifications are routed to this URL.
+          type: string
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                  - message
+                  - ack
+                  - chat
+                  - status
+                  - service
+              method:
+                type: string
+                enum:
+                  - post
+                  - put
+                  - delete
+                  - patch
+          default:
+            - type: message
+              method: put
+          description: Tracked events. <br/>"message" - got new message;<br/>"ack" - got
+            message status;<br/>"chat" - got chat/dialog update;<br/>"status" -
+            instance status changed;<br/>"service" - special notifications
+        mode:
+          type: string
+          default: body
+          enum:
+            - body
+            - path
+            - method
+          description: Request method for sending hook.
+    Button:
+      title: Button
+      type: object
+      properties:
+        type:
+          description: Type of button
+          type: string
+          enum:
+            - reply
+            - native
+        title:
+          description: Button text
+          type: string
+        id:
+          description: Button ID
+          type: string
+    MessageContentReply:
+      title: Message content reply
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type of message content
+          enum:
+            - list_reply
+            - buttons_reply
+        list_reply:
+          $ref: "#/components/schemas/ListReply"
+        buttons_reply:
+          $ref: "#/components/schemas/ButtonsReply"
+    ListReply:
+      title: Buttons reply
+      type: object
+      properties:
+        id:
+          type: string
+          description: Clicked list ID
+        title:
+          type: string
+          description: Clicked list title
+        description:
+          type: string
+          description: Clicked list description
+    ButtonsReply:
+      title: Buttons reply
+      type: object
+      properties:
+        id:
+          type: string
+          description: Clicked button ID
+        title:
+          type: string
+          description: Clicked button text
+    WebhookContactProfile:
+      title: Root Type for Webhook-Contact-Profile
+      description: ""
+      type: object
+      properties:
+        name:
+          description: Optional. As of v2.21.4, contains the sender's profile name.
+          type: string
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      bearerFormat: token
+      type: http
+    tokenAuth:
+      in: query
+      name: token
+      type: apiKey

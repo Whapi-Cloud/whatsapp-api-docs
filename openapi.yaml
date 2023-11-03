@@ -4,14 +4,13 @@ info:
     name: Whapi Support
     email: care@whapi.cloud
     url: https://whapi.cloud/support
-  description: Send and receive messages using HTTP requests based on the
-    unofficial Whatsapp API. Fixed price with no hidden commissions, unlimited
-    messages, no message or dialog fees. The user can send and receive text and
-    media messages through WhatsApp in private or group chats with the endpoints
-    that are created for the user. Moreover, the current status and the screen
-    of the session can be retrieved using these endpoints
-  title: WhatsApp Unofficial API
-  version: 0.1.1
+  description: Sending and receiving messages using HTTP requests. Fixed price
+    with no hidden fees, without limits and restrictions. You will be able to
+    send and receive text/media/files/locations/goods/orders/polls messages via
+    WhatsApp in private or group chats. Guides and SDK can be found on our
+    website.
+  title: WhatsApp API
+  version: 1.5.1
   termsOfService: https://whapi.cloud/terms
 servers:
   - url: https://gate.whapi.cloud
@@ -31,17 +30,27 @@ tags:
     description: Manage the chats of the channel
   - name: Contacts
     description: Manage the contacts of the channel
+  - name: Presences
+    description: Contact presence
   - name: Groups
     description: Manage the groups of the channel
   - name: Media
     description: Manage the media of the channel
   - name: Business
     description: WhatsApp Business Functions
+  - name: Labels
+    description: WhatsApp Labels Functions
+  - name: Blacklist
+    description: WhatsApp Blacklist Functions
 paths:
   /health:
     get:
       tags:
         - Channel
+      parameters:
+        - $ref: "#/components/parameters/wakeup"
+        - $ref: "#/components/parameters/platform"
+        - $ref: "#/components/parameters/channel_type"
       responses:
         "200":
           $ref: "#/components/responses/Health"
@@ -49,7 +58,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: checkHealth
-      summary: Check health
+      summary: Check health & launch channel
   /settings:
     get:
       tags:
@@ -109,10 +118,26 @@ paths:
                 content:
                   application/json:
                     schema:
-                      $ref: "#/components/schemas/WebhookEvent"
+                      $ref: "#/components/schemas/WebhookPayload"
               responses:
                 "200":
                   description: OK
+  /settings/events:
+    get:
+      tags:
+        - Channel
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Events"
+          description: OK
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getAllowedEvents
+      summary: Get allowed events
   /users/login:
     get:
       tags:
@@ -122,6 +147,12 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/UserLogin"
+        "406":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Not acceptable for mobile type channel
         "409":
           content:
             application/json:
@@ -160,6 +191,12 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/UserLogin"
+        "406":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Not acceptable for mobile type channel
         "409":
           content:
             application/json:
@@ -171,6 +208,82 @@ paths:
       deprecated: false
       operationId: loginUserRowData
       summary: Login user with QR-rowdata
+  "/users/login/{PhoneNumber}":
+    get:
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/PhoneNumber"
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthCode"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Invalid phone number
+        "406":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Not acceptable for mobile type channel
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Channel already authenticated
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Render QR failed
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: loginUserViaAuthCode
+      summary: Get auth code by phone number
+  /users/login/mobile:
+    post:
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/PhoneNumber"
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthCode"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Invalid phone number
+        "406":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Not acceptable for mobile type channel
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Channel already authenticated
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Render QR failed
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: loginUserViaMobile
+      summary: Login in whatsapp with phone number
   /users/logout:
     post:
       tags:
@@ -189,6 +302,43 @@ paths:
       deprecated: false
       operationId: logoutUser
       summary: Logout user
+  /users/profile:
+    get:
+      tags:
+        - Users
+      responses:
+        "200":
+          $ref: "#/components/responses/UserProfile"
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getUserProfile
+      summary: User info
+    patch:
+      tags:
+        - Users
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Some Cool Name
+              about: Some Cool About
+              icon: https://pps.whatsapp.net/v/...
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+        description: Change user profile
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: updateUserProfile
+      summary: Update user info
   /messages/list:
     get:
       tags:
@@ -684,6 +834,70 @@ paths:
       deprecated: false
       operationId: sendMessageDocument
       summary: 📑 Send media-document message
+  /messages/link_preview:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderLinkPreview"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderLinkPreview"
+        description: Message link preview send parameters
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageLinkPreview
+      summary: 📎 Send link preview message
   /messages/location:
     post:
       tags:
@@ -892,6 +1106,52 @@ paths:
       deprecated: false
       operationId: sendMessageContactList
       summary: 👥 Send contact list message
+  /messages/poll:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderPoll"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderPoll"
+        description: Message poll
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessagePoll
+      summary: 📊 Send poll message
   /messages/interactive:
     post:
       tags:
@@ -1645,6 +1905,164 @@ paths:
       deprecated: false
       operationId: checkExist
       summary: Check exist
+  /presences/me:
+    put:
+      tags:
+        - Presences
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMePresenceRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckContactResponse"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization to send online or offline presence
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMePresence
+      summary: Send online or offline presence
+  "/presences/{ContactID}":
+    get:
+      tags:
+        - Presences
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Presence"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization to get presence
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact presence not subscribed
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getPresence
+      summary: Get presence
+    post:
+      tags:
+        - Presences
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckContactResponse"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization to subscribe to presence
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not found in whatsapp
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact presence already subscribed
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: subscribePresence
+      summary: Subscribe to presence
+    put:
+      tags:
+        - Presences
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendPresenceRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckContactResponse"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization to send typing or recording presence
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendPresence
+      summary: Send typing or recording presence
   /groups:
     get:
       tags:
@@ -1683,7 +2101,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NewGroup"
+                $ref: "#/components/schemas/Group"
           description: ""
         "400":
           content:
@@ -1921,6 +2339,52 @@ paths:
       operationId: revokeGroupInvite
       summary: Revoke group invite
   "/groups/{GroupID}/participants":
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/ListParticipants"
+        required: true
+      tags:
+        - Groups
+      parameters:
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for add participant
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: You do not have permissions for this action
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified group or participant not found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified participant already in group
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: addGroupParticipant
+      summary: Add group participant
     delete:
       requestBody:
         $ref: "#/components/requestBodies/ListParticipants"
@@ -1971,6 +2435,10 @@ paths:
         "200":
           $ref: "#/components/responses/Image"
         "204":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
           description: Group icon not set
         "400":
           content:
@@ -2231,6 +2699,311 @@ paths:
       deprecated: false
       operationId: deleteMedia
       summary: Delete media
+  "/blacklist/{ContactID}":
+    put:
+      tags:
+        - Blacklist
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: blacklistAdd
+      summary: Add contact to blacklist
+    delete:
+      tags:
+        - Blacklist
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: blacklistRemove
+      summary: Remove contact from blacklist
+  /business/products:
+    get:
+      tags:
+        - Business
+      parameters:
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+      responses:
+        "200":
+          $ref: "#/components/responses/Products"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for getting products
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getProducts
+      summary: Get products
+  "/business/products/{ProductID}":
+    get:
+      tags:
+        - Business
+      parameters:
+        - $ref: "#/components/parameters/ProductID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Product"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for getting products
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified product not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getProduct
+      summary: Get product
+    post:
+      tags:
+        - Business
+      parameters:
+        - $ref: "#/components/parameters/ProductID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderProductFromCatalog"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderProductFromCatalog"
+        description: Message product
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for add contact
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified product not found
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendProduct
+      summary: Send product
+  "/business/orders/{OrderID}":
+    get:
+      tags:
+        - Business
+      parameters:
+        - $ref: "#/components/parameters/OrderID"
+        - $ref: "#/components/parameters/order_token"
+      responses:
+        "200":
+          $ref: "#/components/responses/OrderItems"
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for getting products
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need order token for getting products
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified order not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getOrderItems
+      summary: Get order items
+  /labels:
+    get:
+      tags:
+        - Labels
+      responses:
+        "200":
+          $ref: "#/components/responses/Labels"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getLabels
+      summary: Get labels
+  "/labels/{LabelID}":
+    get:
+      tags:
+        - Labels
+      parameters:
+        - $ref: "#/components/parameters/LabelID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Label"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified label not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getLabelAssociations
+      summary: Get objects associated with label
+  "/labels/{LabelID}/{AssociationID}":
+    post:
+      tags:
+        - Labels
+      parameters:
+        - $ref: "#/components/parameters/LabelID"
+        - $ref: "#/components/parameters/AssociationID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for add label association
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified chat or message not found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Label association already exists
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: addLabelAssociation
+      summary: Add label association
+    delete:
+      tags:
+        - Labels
+      parameters:
+        - $ref: "#/components/parameters/LabelID"
+        - $ref: "#/components/parameters/AssociationID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for delete label association
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified association not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deleteLabelAssociation
+      summary: Delete label association
   /limits:
     get:
       tags:
@@ -2251,6 +3024,40 @@ paths:
       summary: Get limits
 components:
   parameters:
+    wakeup:
+      name: wakeup
+      description: If set to false, the channel will not launch
+      schema:
+        type: boolean
+        default: true
+      in: query
+    platform:
+      name: platform
+      description: "Browser name, OS name, OS version separated by commas. Example:
+        'Safari,Windows,10.0.19044' or 'Desktop,Mac OS,11.6.3'"
+      schema:
+        type: string
+        example: Chrome,Whapi,1.6.0
+      in: query
+    channel_type:
+      name: channel_type
+      description: null
+      schema:
+        type: string
+        enum:
+          - web
+          - mobile
+        default: web
+      in: query
+    PhoneNumber:
+      name: PhoneNumber
+      style: simple
+      explode: false
+      description: Phone number without + and spaces, only digits
+      schema:
+        $ref: "#/components/schemas/ContactID"
+      in: path
+      required: true
     count:
       name: count
       description: Count of objects to return
@@ -2359,6 +3166,51 @@ components:
       description: Media ID
       schema:
         $ref: "#/components/schemas/MediaID"
+      in: path
+      required: true
+    ProductID:
+      name: ProductID
+      style: simple
+      explode: false
+      description: Product ID
+      schema:
+        $ref: "#/components/schemas/ProductID"
+      in: path
+      required: true
+    OrderID:
+      name: OrderID
+      style: simple
+      explode: false
+      description: Order ID
+      schema:
+        $ref: "#/components/schemas/OrderID"
+      in: path
+      required: true
+    order_token:
+      name: order_token
+      description: Base64 token from order for receiving information
+      schema:
+        type: string
+      in: query
+      allowReserved: true
+    LabelID:
+      name: LabelID
+      style: simple
+      explode: false
+      description: Label ID
+      schema:
+        $ref: "#/components/schemas/LabelID"
+      in: path
+      required: true
+    AssociationID:
+      name: AssociationID
+      style: simple
+      explode: false
+      description: Chat ID or Message ID for label association
+      schema:
+        oneOf:
+          - $ref: "#/components/schemas/MessageID"
+          - $ref: "#/components/schemas/ChatID"
       in: path
       required: true
   requestBodies:
@@ -2526,6 +3378,22 @@ components:
             type: string
             format: binary
       description: OK
+    AuthCode:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthCode"
+      description: OK
+    UserProfile:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserProfile"
+          example:
+            name: Some Cool Name
+            about: Some Cool About
+            icon: https://pps.whatsapp.net/v/...
+      description: OK
     Messages:
       content:
         application/json:
@@ -2567,6 +3435,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Contact"
+      description: OK
+    Presence:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Presence"
       description: OK
     Groups:
       content:
@@ -2639,6 +3513,36 @@ components:
             format: binary
             type: string
       description: OK
+    Products:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProductsList"
+      description: OK
+    Product:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Product"
+      description: OK
+    OrderItems:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OrderItems"
+      description: OK
+    Labels:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Labels"
+      description: OK
+    Label:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LabelAssociations"
+      description: OK
     Limits:
       content:
         application/json:
@@ -2654,8 +3558,8 @@ components:
           $ref: "#/components/schemas/Error"
       required:
         - error
-    WebhookEvent:
-      title: Root Type for Webhook-Event
+    WebhookPayload:
+      title: Webhook payload
       description: ""
       type: object
       properties:
@@ -2665,16 +3569,138 @@ components:
             $ref: "#/components/schemas/WebhookContact"
         messages:
           type: array
+          description: The messages array contains all messages that were sent to the
+            webhook URL. Sent on event "messages.post" or "messages.put"
           items:
             $ref: "#/components/schemas/Message"
+        messages_updates:
+          type: array
+          description: The messages updates array contains all messages updates that were
+            sent to the webhook URL. Sent on event "messages.patch"
+          items:
+            $ref: "#/components/schemas/MessageUpdate"
+        messages_removed:
+          type: array
+          description: The messages removed array contains all messages removed that were
+            sent to the webhook URL. Sent on event "messages.delete"
+          items:
+            $ref: "#/components/schemas/MessageID"
+        messages_removed_all:
+          type: string
+          description: The messages removed all contains the chat ID of the chat that was
+            cleared. Sent on event "messages.delete"
+          example: 1234567890@s.whatsapp.net
         statuses:
           type: array
+          description: The messages statuses array contains all statuses that were sent to
+            the webhook URL. Sent on event "statuses.post" or "statuses.put"
           items:
             $ref: "#/components/schemas/WebhookStatus"
+        chats:
+          type: array
+          description: The chats array contains all chats that were sent to the webhook
+            URL. Sent on event "chats.post" or "chats.put"
+          items:
+            $ref: "#/components/schemas/Chat"
+        chats_updates:
+          type: array
+          description: The chats updates array contains all chats updates that were sent
+            to the webhook URL. Sent on event "chats.patch"
+          items:
+            $ref: "#/components/schemas/ChatUpdate"
+        chats_removed:
+          type: array
+          description: The chats removed array contains all chats removed that were sent
+            to the webhook URL. Sent on event "chats.delete"
+          items:
+            $ref: "#/components/schemas/ChatID"
+        contacts_updates:
+          type: array
+          description: The contacts updates array contains all contacts updates that were
+            sent to the webhook URL. Sent on event "contacts.patch"
+          items:
+            $ref: "#/components/schemas/ContactUpdate"
+        groups:
+          type: array
+          description: The groups array contains all groups that were sent to the webhook
+            URL. Sent on event "groups.post"
+          items:
+            $ref: "#/components/schemas/Group"
+        groups_participants:
+          type: array
+          description: The groups participants event array contains all groups
+            participants event that were sent to the webhook URL. Sent on event
+            "groups.put"
+          items:
+            $ref: "#/components/schemas/ParticipantEvent"
+        groups_updates:
+          type: array
+          description: The groups updates array contains all groups updates that were sent
+            to the webhook URL. Sent on event "groups.patch"
+          items:
+            $ref: "#/components/schemas/GroupUpdate"
+        presences:
+          type: array
+          description: The presences array contains all presences that were sent to the
+            webhook URL. Sent on event "presences.post"
+          items:
+            $ref: "#/components/schemas/Presence"
+        labels:
+          type: array
+          description: The labels array contains all labels that were sent to the webhook
+            URL. Sent on event "labels.post"
+          items:
+            $ref: "#/components/schemas/Label"
+        labels_removed:
+          type: array
+          description: The labels removed array contains all labels removed that were sent
+            to the webhook URL. Sent on event "labels.delete"
+          items:
+            $ref: "#/components/schemas/LabelID"
+        calls:
+          type: array
+          description: The calls array contains all calls that were sent to the webhook
+            URL. Sent on event "calls.post"
+          items:
+            $ref: "#/components/schemas/CallEvent"
+        qr:
+          $ref: "#/components/schemas/QR"
+        health:
+          $ref: "#/components/schemas/Health"
+        user:
+          $ref: "#/components/schemas/Contact"
         errors:
           type: array
           items:
             $ref: "#/components/schemas/Error"
+        event:
+          $ref: "#/components/schemas/Event"
+        channel_id:
+          type: string
+          description: The channel ID
+          example: SUPERMAN-f75
+    Events:
+      title: Events
+      type: array
+      items:
+        $ref: "#/components/schemas/Event"
+    UserProfileUpdate:
+      title: UserProfile request body
+      type: object
+      properties:
+        name:
+          type: string
+          description: New user name.
+          minLength: 3
+          maxLength: 25
+        about:
+          type: string
+          description: New user info in About section.
+          minLength: 1
+          maxLength: 139
+        icon:
+          type: string
+          description: New user icon in base64/url.
     SenderText:
       title: Message text send parameters
       type: object
@@ -2685,13 +3711,12 @@ components:
         - $ref: "#/components/schemas/Sender"
         - $ref: "#/components/schemas/MessagePropsText"
         - properties:
-            link_preview:
-              $ref: "#/components/schemas/LinkPreview"
             typing_time:
               type: number
               description: Time in seconds to simulate typing
               default: 0
               minimum: 0
+              maximum: 60
         - $ref: "#/components/schemas/Mentions"
         - $ref: "#/components/schemas/ViewOnce"
     SenderImage:
@@ -2767,6 +3792,20 @@ components:
         - $ref: "#/components/schemas/SendMedia"
         - $ref: "#/components/schemas/MessagePropsDocument"
         - $ref: "#/components/schemas/ViewOnce"
+    SenderLinkPreview:
+      title: Message link preview send parameters
+      type: object
+      required:
+        - to
+        - body
+        - title
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessagePropsText"
+        - $ref: "#/components/schemas/MessagePropsLinkPreview"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/Mentions"
+        - $ref: "#/components/schemas/ViewOnce"
     SenderLocation:
       title: Message location send parameters
       type: object
@@ -2805,6 +3844,17 @@ components:
       allOf:
         - $ref: "#/components/schemas/Sender"
         - $ref: "#/components/schemas/MessageContentContacts"
+    SenderPoll:
+      title: Message poll send parameters
+      type: object
+      required:
+        - to
+        - title
+        - options
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessagePropsPoll"
+        - $ref: "#/components/schemas/ViewOnce"
     SenderInteractive:
       title: Message interactive send parameters
       type: object
@@ -2813,7 +3863,6 @@ components:
       allOf:
         - $ref: "#/components/schemas/Sender"
         - $ref: "#/components/schemas/MessagePropsInteractive"
-        - $ref: "#/components/schemas/SendMedia"
         - $ref: "#/components/schemas/ViewOnce"
     SenderSticker:
       title: Message sticker send parameters
@@ -2927,10 +3976,39 @@ components:
             name:
               description: Name of contact
               type: string
+    SendMePresenceRequest:
+      title: Send me presence request
+      required:
+        - presence
+      type: object
+      properties:
+        presence:
+          type: string
+          enum:
+            - online
+            - offline
+    SendPresenceRequest:
+      title: Send presence request
+      required:
+        - presence
+      type: object
+      properties:
+        presence:
+          type: string
+          enum:
+            - typing
+            - recording
+            - pause
+        delay:
+          type: number
+          description: Delay in seconds to simulate typing or recording
+          default: 0
+          minimum: 0
     CreateGroupRequest:
       title: Create group request
       required:
         - subject
+        - participants
       type: object
       allOf:
         - type: object
@@ -2938,14 +4016,89 @@ components:
             subject:
               type: string
         - $ref: "#/components/schemas/Participants"
-    NewGroup:
-      title: New group
+    Group:
+      title: Group
       type: object
       required:
-        - group_id
-      properties:
-        group_id:
-          $ref: "#/components/schemas/GroupID"
+        - id
+        - type
+        - name
+        - participants
+        - size
+      allOf:
+        - $ref: "#/components/schemas/Chat"
+        - properties:
+            name:
+              type: string
+              description: Group name
+              example: Group name
+            name_owner:
+              type: string
+              description: Group name owner
+              example: Group name owner
+            name_at:
+              type: integer
+              description: Group name change timestamp
+              example: 1675964377
+            description:
+              type: string
+              description: Group description
+              example: Group description
+            description_owner:
+              type: string
+              description: Group description owner
+              example: Group description owner
+            description_id:
+              type: string
+              description: Group description ID
+              example: Group description ID
+            size:
+              type: integer
+              description: Group size
+              example: 2
+            participants:
+              type: array
+              description: Group participants
+              items:
+                $ref: "#/components/schemas/Participant"
+            created_at:
+              type: integer
+              description: Group creation timestamp
+              example: 1675964377
+            created_by:
+              $ref: "#/components/schemas/ContactID"
+            suspended:
+              type: boolean
+              description: Is group suspended
+              example: false
+            terminated:
+              type: boolean
+              description: Is group terminated
+              example: false
+            is_parent:
+              type: boolean
+              description: Is group parent
+              example: false
+            is_default_subgroup:
+              type: boolean
+              description: Is group default subgroup
+              example: false
+            restricted:
+              type: boolean
+              description: If only admins can change group settings
+              example: false
+            announcements:
+              type: boolean
+              description: If only admins can send messages
+              example: false
+            ephemeral:
+              type: number
+              description: Group ephemeral timer
+              example: 0
+            invite_code:
+              type: string
+              description: Group invite code
+              example: Group invite code
     GroupInvite:
       title: Group invite
       description: ""
@@ -2955,6 +4108,14 @@ components:
       properties:
         invite_code:
           type: string
+    NewGroup:
+      title: New group
+      type: object
+      required:
+        - group_id
+      properties:
+        group_id:
+          $ref: "#/components/schemas/GroupID"
     UpdateGroupInfoRequest:
       title: Update group info request
       required:
@@ -2975,22 +4136,41 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UploadMedia"
-    ContactID:
+    SenderProductFromCatalog:
+      title: Message product from catalog send parameters
+      type: object
+      required:
+        - to
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - properties:
+            catalog_id:
+              description: Catalog ID
+              type: string
+    MessageID:
       type: string
-      description: Contact ID
-      pattern: ^([\d]{7,15})?$
+      description: Message ID
+      pattern: ^[A-Za-z0-9._]{4,23}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{4,10})?$
     ChatID:
       type: string
       description: Chat ID
       pattern: ^[\d-]{10,31}@[\w\.]{1,}$
+    ContactID:
+      type: string
+      description: Contact ID
+      pattern: ^([\d]{7,15})?$
     GroupID:
       type: string
       description: Group ID
       pattern: ^[\d-]{10,31}@g\.us$
+    LabelID:
+      type: string
+      description: Label ID
+      pattern: ^([\d]{1,2})?$
     MediaID:
       type: string
       description: Media ID
-      pattern: ^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$
+      pattern: ^[a-zA-Z]+-[0-9a-fA-F-]+$
     MediaMessageType:
       type: string
       description: Media message type
@@ -3002,10 +4182,14 @@ components:
         - voice
         - document
         - sticker
-    MessageID:
+    OrderID:
       type: string
-      description: Message ID
-      pattern: ^[0-9A-F]{10,32}$
+      description: Order ID
+      pattern: ^([\d]{10,15})?$
+    ProductID:
+      type: string
+      description: Product ID
+      pattern: ^([\d]{10,16})?$
     SenderMedia:
       title: Sender media
       type: object
@@ -3104,6 +4288,15 @@ components:
           type: string
           description: Color of light pixels
           default: "#ffffff"
+    AuthCode:
+      title: Auth code
+      description: The auth code is the code that is used to authenticate in whatsapp
+      type: object
+      properties:
+        code:
+          type: string
+          description: The auth code
+          example: 123456
     Chat:
       title: Chat
       type: object
@@ -3167,6 +4360,11 @@ components:
           example: true
         last_message:
           $ref: "#/components/schemas/Message"
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+          description: Labels associated with chat
     ChatsList:
       title: List of chats
       type: object
@@ -3210,52 +4408,6 @@ components:
             contacts:
               $ref: "#/components/schemas/Contacts"
         - $ref: "#/components/schemas/Iterator"
-    Group:
-      title: Group
-      type: object
-      required:
-        - id
-        - type
-        - name
-        - participants
-      allOf:
-        - $ref: "#/components/schemas/Chat"
-        - properties:
-            name:
-              type: string
-              description: Group name
-              example: Group name
-            description:
-              type: string
-              description: Group description
-              example: Group description
-            participants:
-              type: array
-              description: Group participants
-              items:
-                $ref: "#/components/schemas/Participant"
-            created_at:
-              type: integer
-              description: Group creation timestamp
-              example: 1675964377
-            created_by:
-              $ref: "#/components/schemas/ContactID"
-            suspended:
-              type: boolean
-              description: Is group suspended
-              example: false
-            terminated:
-              type: boolean
-              description: Is group terminated
-              example: false
-            is_parent:
-              type: boolean
-              description: Is group parent
-              example: false
-            is_default_subgroup:
-              type: boolean
-              description: Is group default subgroup
-              example: false
     GroupsList:
       title: List of groups
       type: object
@@ -3268,6 +4420,8 @@ components:
     Health:
       title: Health response
       type: object
+      description: The health object contains information about the uptime of the
+        channel and the status of the channel. Sent on event "channels.post"
       properties:
         start_at:
           type: number
@@ -3283,6 +4437,23 @@ components:
         - start_at
         - uptime
         - status
+    LabelAssociations:
+      title: Label Associations
+      type: object
+      properties:
+        chats:
+          type: array
+          items:
+            $ref: "#/components/schemas/Chat"
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+    Labels:
+      title: Labels
+      type: array
+      items:
+        $ref: "#/components/schemas/Label"
     Limits:
       title: Trial limits
       type: object
@@ -3334,6 +4505,8 @@ components:
         from_name:
           type: string
           description: Pushname of the sender
+        source:
+          $ref: "#/components/schemas/MessageSource"
         timestamp:
           type: number
           description: Message timestamp
@@ -3353,6 +4526,8 @@ components:
           $ref: "#/components/schemas/MessageContentAudio"
         document:
           $ref: "#/components/schemas/MessageContentDocument"
+        link_preview:
+          $ref: "#/components/schemas/MessageContentLinkPreview"
         sticker:
           $ref: "#/components/schemas/MessageContentSticker"
         location:
@@ -3365,6 +4540,10 @@ components:
           $ref: "#/components/schemas/MessageContentContacts"
         interactive:
           $ref: "#/components/schemas/MessageContentInteractive"
+        poll:
+          $ref: "#/components/schemas/MessageContentPoll"
+        hsm:
+          $ref: "#/components/schemas/MessageContentHSM"
         system:
           $ref: "#/components/schemas/MessageContentSystem"
         order:
@@ -3380,6 +4559,11 @@ components:
           items:
             $ref: "#/components/schemas/MessageReaction"
           description: Reactions for message
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+          description: Labels associated with message
     MessagesList:
       title: List of messages
       type: object
@@ -3400,6 +4584,90 @@ components:
           format: int32
           description: Offset of requested messages
           default: 0
+    OrderItems:
+      title: Order items
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductItem"
+    Presence:
+      title: Presence
+      required:
+        - contact_id
+      type: object
+      properties:
+        contact_id:
+          $ref: "#/components/schemas/ContactID"
+        last_seen:
+          description: Last seen timestamp
+          type: number
+        status:
+          description: Presence status
+          type: string
+          enum:
+            - online
+            - offline
+            - typing
+            - recording
+            - pending
+    Product:
+      title: Product item
+      type: object
+      properties:
+        product_retailer_id:
+          description: Product ID
+          type: string
+        currency:
+          $ref: "#/components/schemas/Currency"
+        images:
+          description: Product images urls
+          type: array
+          items:
+            type: string
+            format: uri
+        review:
+          description: Product review status
+          type: object
+        availability:
+          description: Product availability
+          type: string
+          enum:
+            - in stock
+            - out of stock
+        name:
+          description: Product name
+          type: string
+        url:
+          description: Product url
+          type: string
+        description:
+          description: Product description
+          type: string
+        price:
+          description: Product price
+          type: number
+        is_hidden:
+          description: Product is hidden
+          type: boolean
+      required:
+        - product_retailer_id
+        - price
+        - currency
+        - images
+        - availability
+        - name
+        - description
+    ProductsList:
+      title: List of products
+      type: object
+      allOf:
+        - type: object
+          properties:
+            products:
+              $ref: "#/components/schemas/Products"
+        - $ref: "#/components/schemas/Iterator"
     SentMessage:
       title: Sent message
       type: object
@@ -3448,6 +4716,9 @@ components:
     QR:
       title: QR code
       type: object
+      description: The QR code object contains the QR code image and the status of the
+        QR code. The QR code is only valid for a limited time. Sent on event
+        "channels.patch"
       properties:
         status:
           type: string
@@ -3468,6 +4739,62 @@ components:
           description: Seconds until the QR code expires
       required:
         - status
+    UserProfile:
+      title: UserProfile response
+      type: object
+      properties:
+        name:
+          type: string
+          description: User name.
+        about:
+          type: string
+          description: User info in About section.
+        icon:
+          type: string
+          description: Profile preview icon url.
+    Label:
+      title: Label
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/LabelID"
+        name:
+          type: string
+          description: Label name
+        color:
+          type: string
+          description: Label color
+          enum:
+            - salmon
+            - lightskyblue
+            - gold
+            - plum
+            - silver
+            - mediumturquoise
+            - violet
+            - goldenrod
+            - cornflowerblue
+            - greenyellow
+            - cyan
+            - lightpink
+            - mediumaquamarine
+            - orangered
+            - deepskyblue
+            - limegreen
+            - darkorange
+            - lightsteelblue
+            - mediumpurple
+            - rebeccapurple
+        count:
+          type: integer
+          description: Number of objects associated with this label
+          format: int32
+          minimum: 0
+          example: 1
+      required:
+        - id
+        - name
+        - color
     Chats:
       title: Chats
       type: array
@@ -3522,6 +4849,37 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ContactID"
+    Event:
+      title: Event
+      type: object
+      description: message, ack, chat, status - is deprecated and will be removed in
+        the next
+      properties:
+        type:
+          type: string
+          enum:
+            - messages
+            - statuses
+            - chats
+            - contacts
+            - groups
+            - presences
+            - calls
+            - channel
+            - users
+            - labels
+            - service
+            - message
+            - ack
+            - chat
+            - status
+        method:
+          type: string
+          enum:
+            - post
+            - put
+            - delete
+            - patch
     Participant:
       title: Participant
       type: object
@@ -3583,6 +4941,7 @@ components:
         - audio
         - voice
         - document
+        - link_preview
         - location
         - live_location
         - contact
@@ -3598,6 +4957,17 @@ components:
         - reply
         - poll
         - hsm
+        - order
+    MessageSource:
+      default: text
+      type: string
+      description: Message source
+      enum:
+        - web
+        - mobile
+        - api
+        - system
+        - business_api
     MessageStatus:
       type: string
       description: Message ack status
@@ -3682,6 +5052,25 @@ components:
               description: Optional. Base64 encoded preview of the media. In JPEG format.
               type: string
         - $ref: "#/components/schemas/ActionButtons"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentLinkPreview:
+      title: Content link preview message
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/MessagePropsText"
+        - properties:
+            url:
+              type: string
+              description: URL of the link
+            id:
+              $ref: "#/components/schemas/MediaID"
+            link:
+              description: Optional. Link to media
+              type: string
+            sha256:
+              description: Checksum
+              type: string
+        - $ref: "#/components/schemas/MessagePropsLinkPreview"
         - $ref: "#/components/schemas/ViewOnce"
     MessageContentSticker:
       title: Content sticker message
@@ -3807,6 +5196,55 @@ components:
         - $ref: "#/components/schemas/MessagePropsInteractive"
         - $ref: "#/components/schemas/MessageContentMedia"
         - $ref: "#/components/schemas/ViewOnce"
+    MessageContentPoll:
+      title: Message content poll
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/MessagePropsPoll"
+        - properties:
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/PollResults"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentHSM:
+      title: Message content HSM
+      type: object
+      properties:
+        header:
+          type: object
+          description: Header
+          properties:
+            type:
+              type: string
+              description: Header type
+              enum:
+                - text
+                - image
+                - video
+                - document
+                - location
+            text:
+              $ref: "#/components/schemas/MessagePropsText"
+            image:
+              $ref: "#/components/schemas/MessageContentMedia"
+            video:
+              $ref: "#/components/schemas/MessageContentMedia"
+            document:
+              $ref: "#/components/schemas/MessageContentMedia"
+            location:
+              $ref: "#/components/schemas/MessageContentLocation"
+        body:
+          description: Message text
+          type: string
+        footer:
+          description: Message footer
+          type: string
+        buttons:
+          type: array
+          description: Buttons
+          items:
+            $ref: "#/components/schemas/HSMButton"
     MessageContentSystem:
       title: Message content interactive
       type: object
@@ -3818,16 +5256,39 @@ components:
       title: Message content order
       type: object
       properties:
-        catalog_id:
+        order_id:
+          description: Order ID
           type: string
-          description: Catalog ID
-        product_items:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProductItem"
+        seller:
+          type: string
+          description: Seller ID (Contact ID)
+        title:
+          type: string
+          description: Order title
         text:
           type: string
-          description: Message body
+          description: Order message text
+        token:
+          description: Base64 secret token
+          type: string
+        item_count:
+          description: Total products count
+          type: number
+        currency:
+          $ref: "#/components/schemas/Currency"
+        total_price:
+          description: Total order price
+          type: number
+        status:
+          description: Order status
+          type: string
+          enum:
+            - new
+            - accepted
+            - canceled
+        preview:
+          description: Order preview base64 image JPEG
+          type: string
     MessageContentProductItems:
       title: Message content product items
       type: object
@@ -3841,19 +5302,36 @@ components:
     MessageAction:
       title: Message action
       type: object
+      required:
+        - type
       properties:
         target:
-          description: Target message ID
+          description: Target message ID or chat ID
           type: string
         type:
           description: Type of action
           type: string
           enum:
+            - edit
             - delete
             - reaction
+            - ephemeral
+            - vote
         emoji:
           description: Action emoji for reaction
           type: string
+        ephemeral:
+          description: Ephemeral message duration
+          type: integer
+        edited_type:
+          $ref: "#/components/schemas/MessageType"
+        edited_content:
+          $ref: "#/components/schemas/MessageContent"
+        votes:
+          type: array
+          description: List of poll options
+          items:
+            type: string
     MessageContext:
       title: Message context
       description: ""
@@ -3881,6 +5359,9 @@ components:
         quoted_author:
           type: string
           description: Whatsapp ID of quoted message author
+        ephemeral:
+          type: integer
+          description: Ephemeral message duration
     MessageReaction:
       title: Message reactions
       type: object
@@ -3902,8 +5383,40 @@ components:
         unread:
           type: boolean
           description: Is reaction unread
+    MessageContent:
+      title: Message content
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/MessageContentText"
+        - $ref: "#/components/schemas/MessageContentImage"
+        - $ref: "#/components/schemas/MessageContentVideo"
+        - $ref: "#/components/schemas/MessageContentAudio"
+        - $ref: "#/components/schemas/MessageContentDocument"
+        - $ref: "#/components/schemas/MessageContentLinkPreview"
+        - $ref: "#/components/schemas/MessageContentSticker"
+        - $ref: "#/components/schemas/MessageContentLocation"
+        - $ref: "#/components/schemas/MessageContentLiveLocation"
+        - $ref: "#/components/schemas/MessageContentContact"
+        - $ref: "#/components/schemas/MessageContentContacts"
+        - $ref: "#/components/schemas/MessageContentInteractive"
+        - $ref: "#/components/schemas/MessageContentPoll"
+        - $ref: "#/components/schemas/MessageContentReply"
+    MessageContentReply:
+      title: Message content reply
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type of message content
+          enum:
+            - list_reply
+            - buttons_reply
+        list_reply:
+          $ref: "#/components/schemas/ListReply"
+        buttons_reply:
+          $ref: "#/components/schemas/ButtonsReply"
     MessageContentMedia:
-      title: Content image message
+      title: Content for all media message
       type: object
       required:
         - id
@@ -3974,6 +5487,39 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Button"
+    MessagePropsText:
+      title: Message text unique parameters
+      type: object
+      required:
+        - body
+      properties:
+        body:
+          description: Message text
+          type: string
+    HSMButton:
+      title: Button
+      type: object
+      properties:
+        id:
+          description: ID of the button
+          type: string
+        type:
+          description: Type of button
+          type: string
+          enum:
+            - simple
+            - reply
+            - url
+            - phone_number
+        text:
+          description: Button text
+          type: string
+        url:
+          description: URL
+          type: string
+        phone_number:
+          description: Phone number
+          type: string
     MessagePropsImageOrVideo:
       title: Message image or video unique parameters
       type: object
@@ -4025,112 +5571,187 @@ components:
               type: string
               description: Text of footer
         action:
-          $ref: "#/components/schemas/ActionButtons"
-    ProductItem:
-      title: Product item
+          $ref: "#/components/schemas/ActionProduct"
+    MessagePropsLinkPreview:
+      title: Preview link send parameters
+      description: If 'body' contains a link, this props can be used to create custom
+        preview link
       type: object
       properties:
-        product_retailer_id:
-          description: Product ID
+        title:
           type: string
-        quantity:
-          description: Quantity
+          description: Title of the link
+        description:
+          type: string
+          description: Description of the link
+        canonical:
+          type: string
+          description: Canonical URL of the link (for example, if the link is shortened)
+        preview:
+          type: string
+          description: Base64 encoded image for mini version link preview. In JPEG format
+      required:
+        - title
+    Currency:
+      description: Currency
+      type: string
+      enum:
+        - USD
+        - EUR
+        - GBP
+        - RUB
+        - UAH
+        - BYN
+        - KZT
+        - KGS
+        - AMD
+        - AZN
+        - GEL
+        - MDL
+        - TJS
+        - TMT
+        - UZS
+        - CNY
+        - JPY
+        - CHF
+        - CZK
+        - DKK
+        - ISK
+        - NOK
+        - SEK
+        - HRK
+        - HUF
+        - PLN
+        - RON
+        - TRY
+        - BGN
+        - INR
+        - IDR
+        - MYR
+        - PHP
+        - SGD
+        - THB
+        - VND
+        - MXN
+        - ARS
+        - CLP
+        - COP
+        - PEN
+        - PYG
+        - UYU
+        - BOB
+        - BRL
+        - CRC
+        - DOP
+        - GTQ
+        - HNL
+        - NIO
+        - PAB
+        - SVC
+        - AUD
+        - NZD
+        - ILS
+        - ZAR
+        - BHD
+        - EGP
+        - JOD
+        - KWD
+        - LBP
+        - OMR
+        - QAR
+        - SAR
+        - AED
+        - AFN
+        - ALL
+        - DZD
+        - AOA
+        - AWG
+        - BSD
+        - BDT
+        - BBD
+        - BZD
+        - BMD
+        - BTN
+        - BAM
+        - BWP
+        - BND
+        - BIF
+        - KHR
+        - CAD
+        - CVE
+        - KYD
+        - KMF
+        - CDF
+        - CUP
+        - CZ
+    MessagePropsPoll:
+      title: Message poll unique parameters
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of poll
+        options:
+          type: array
+          description: Options of poll
+          items:
+            type: string
+          minItems: 2
+          maxItems: 12
+        count:
           type: integer
-        item_price:
-          description: Item price
-          type: number
-        currency:
-          description: Currency
+          description: Number of selectable options in poll (max is options.length)
+          minimum: 1
+      required:
+        - title
+        - options
+    PollResults:
+      title: Poll results
+      type: object
+      properties:
+        id:
           type: string
-          enum:
-            - USD
-            - EUR
-            - GBP
-            - RUB
-            - UAH
-            - BYN
-            - KZT
-            - KGS
-            - AMD
-            - AZN
-            - GEL
-            - MDL
-            - TJS
-            - TMT
-            - UZS
-            - CNY
-            - JPY
-            - CHF
-            - CZK
-            - DKK
-            - ISK
-            - NOK
-            - SEK
-            - HRK
-            - HUF
-            - PLN
-            - RON
-            - TRY
-            - BGN
-            - INR
-            - IDR
-            - MYR
-            - PHP
-            - SGD
-            - THB
-            - VND
-            - MXN
-            - ARS
-            - CLP
-            - COP
-            - PEN
-            - PYG
-            - UYU
-            - BOB
-            - BRL
-            - CRC
-            - DOP
-            - GTQ
-            - HNL
-            - NIO
-            - PAB
-            - SVC
-            - AUD
-            - NZD
-            - ILS
-            - ZAR
-            - BHD
-            - EGP
-            - JOD
-            - KWD
-            - LBP
-            - OMR
-            - QAR
-            - SAR
-            - AED
-            - AFN
-            - ALL
-            - DZD
-            - AOA
-            - AWG
-            - BSD
-            - BDT
-            - BBD
-            - BZD
-            - BMD
-            - BTN
-            - BAM
-            - BWP
-            - BND
-            - BIF
-            - KHR
-            - CAD
-            - CVE
-            - KYD
-            - KMF
-            - CDF
-            - CUP
-            - CZ
+          description: option ID
+        name:
+          type: string
+          description: option name
+        count:
+          type: integer
+          description: Number of votes for this option
+          minimum: 0
+        voters:
+          type: array
+          description: List of users who voted for this option
+          items:
+            $ref: "#/components/schemas/ContactID"
+      required:
+        - id
+        - name
+        - count
+        - voters
+    ListReply:
+      title: Buttons reply
+      type: object
+      properties:
+        id:
+          type: string
+          description: Clicked list ID
+        title:
+          type: string
+          description: Clicked list title
+        description:
+          type: string
+          description: Clicked list description
+    ButtonsReply:
+      title: Buttons reply
+      type: object
+      properties:
+        id:
+          type: string
+          description: Clicked button ID
+        title:
+          type: string
+          description: Clicked button text
     MessagePropsSticker:
       title: Message sticker unique parameters
       type: object
@@ -4153,15 +5774,6 @@ components:
           description: Height of the media in pixels
           type: integer
           format: int32
-    MessagePropsText:
-      title: Message text unique parameters
-      type: object
-      required:
-        - body
-      properties:
-        body:
-          description: Message text
-          type: string
     ActionList:
       title: List of messages
       type: object
@@ -4205,22 +5817,6 @@ components:
         button:
           description: Button text for list of message
           type: string
-    MessageContent:
-      title: Message content
-      type: object
-      oneOf:
-        - $ref: "#/components/schemas/MessageContentText"
-        - $ref: "#/components/schemas/MessageContentImage"
-        - $ref: "#/components/schemas/MessageContentVideo"
-        - $ref: "#/components/schemas/MessageContentAudio"
-        - $ref: "#/components/schemas/MessageContentDocument"
-        - $ref: "#/components/schemas/MessageContentSticker"
-        - $ref: "#/components/schemas/MessageContentLocation"
-        - $ref: "#/components/schemas/MessageContentLiveLocation"
-        - $ref: "#/components/schemas/MessageContentContact"
-        - $ref: "#/components/schemas/MessageContentContacts"
-        - $ref: "#/components/schemas/MessageContentInteractive"
-        - $ref: "#/components/schemas/MessageContentReply"
     InteractiveType:
       default: text
       type: string
@@ -4238,6 +5834,16 @@ components:
         - image
         - video
         - document
+    ActionProduct:
+      title: Product fields
+      type: object
+      properties:
+        catalog_id:
+          description: Catalog ID
+          type: string
+        product_retailer_id:
+          description: Product retailer ID
+          type: string
     MessagePropsAudio:
       title: Message audio unique parameters
       type: object
@@ -4255,6 +5861,32 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Message"
+    ProductItem:
+      title: Product item
+      type: object
+      properties:
+        product_retailer_id:
+          description: Product ID
+          type: string
+        name:
+          description: Product name
+          type: string
+        image:
+          description: Product image URL
+          type: string
+        quantity:
+          description: Quantity
+          type: integer
+        price:
+          description: Item price
+          type: number
+        currency:
+          $ref: "#/components/schemas/Currency"
+    Products:
+      title: Products
+      type: array
+      items:
+        $ref: "#/components/schemas/Product"
     Error:
       title: Error
       type: object
@@ -4293,24 +5925,26 @@ components:
         quoted:
           type: string
           description: Message ID of the message to be quoted
-          pattern: ^[0-9A-F]{10,32}$
+          pattern: ^[A-Za-z0-9._]{4,23}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{4,10})?$
         ephemeral:
           type: integer
           description: Time in seconds for the message to be deleted
           minimum: 1
           maximum: 604800
+        edit:
+          type: string
+          description: Message ID of the message to be edited
+          pattern: ^[A-Za-z0-9._]{4,23}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{4,10})?$
     SendMedia:
       title: Message media file parameters for send
       description: >
-        Media file to send. You can use preuploaded file or upload file on
-        the fly. 
+        Media file to send. You can use preuploaded file or upload file on the
+        fly. 
 
         Use preupload files if you want to send same file to multiple chats and
 
         so as not to disturb the order of messages.
       type: object
-      required:
-        - media
       properties:
         media:
           oneOf:
@@ -4341,21 +5975,6 @@ components:
             type: string
             pattern: ^\d{10,15}@s\.whatsapp\.net$
           description: Whatsapp IDs of mentioned users
-    LinkPreview:
-      title: Preview link send parameters
-      description: If 'body' contains a link, this parameter can be used to create
-        custom preview link
-      type: object
-      properties:
-        title:
-          type: string
-          description: Title of the link
-        description:
-          type: string
-          description: Description of the link
-        base64:
-          type: string
-          description: Base64 encoded image. In JPEG format
     MediaWithUploadFromFile:
       title: Media with upload from file
       description: File to upload
@@ -4389,6 +6008,7 @@ components:
               - voice
               - video
               - document
+              - sticker
             type: string
     Webhooks:
       title: Webhooks
@@ -4412,8 +6032,29 @@ components:
         wa_id:
           description: The WhatsApp ID of the contact
           type: string
+    MessageUpdate:
+      title: Message update
+      type: object
+      required:
+        - id
+        - trigger
+        - before_update
+        - after_update
+      properties:
+        id:
+          $ref: "#/components/schemas/MessageID"
+        trigger:
+          $ref: "#/components/schemas/Message"
+        before_update:
+          $ref: "#/components/schemas/Message"
+        after_update:
+          $ref: "#/components/schemas/Message"
+        changes:
+          type: array
+          items:
+            type: string
     WebhookStatus:
-      title: Root Type for Webhook-Status
+      title: Webhook message status
       description: ""
       type: object
       properties:
@@ -4432,6 +6073,116 @@ components:
         timestamp:
           description: Timestamp of the status message
           type: string
+    ChatUpdate:
+      title: Chat update
+      type: object
+      required:
+        - before_update
+        - after_update
+        - changes
+      properties:
+        before_update:
+          $ref: "#/components/schemas/Chat"
+        after_update:
+          $ref: "#/components/schemas/Chat"
+        changes:
+          type: array
+          items:
+            type: string
+    ContactUpdate:
+      title: Contact update
+      type: object
+      required:
+        - before_update
+        - after_update
+        - changes
+      properties:
+        before_update:
+          $ref: "#/components/schemas/Contact"
+        after_update:
+          $ref: "#/components/schemas/Contact"
+        changes:
+          type: array
+          items:
+            type: string
+    ParticipantEvent:
+      title: Participant event
+      type: object
+      required:
+        - group_id
+        - participants
+        - action
+      properties:
+        group_id:
+          $ref: "#/components/schemas/GroupID"
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContactID"
+        action:
+          type: string
+          description: Participant action
+          example: promote
+          enum:
+            - add
+            - remove
+            - promote
+            - demote
+    GroupUpdate:
+      title: Group update
+      type: object
+      required:
+        - before_update
+        - after_update
+        - changes
+      properties:
+        before_update:
+          $ref: "#/components/schemas/Group"
+        after_update:
+          $ref: "#/components/schemas/Group"
+        changes:
+          type: array
+          items:
+            type: string
+    CallEvent:
+      title: Call event
+      type: object
+      properties:
+        id:
+          description: The ID of the call.
+          type: string
+        chat_id:
+          description: The ID of the chat that the call is associated with.
+          type: string
+        status:
+          description: The status of the call.
+          type: string
+          enum:
+            - initiated
+            - ringing
+            - missed
+            - canceled
+            - answered
+        from:
+          description: The ID of the contact that initiated the call.
+          type: string
+        timestamp:
+          description: The timestamp of the call.
+          type: integer
+          format: int64
+        group_call:
+          description: Whether the call is a group call.
+          type: boolean
+        video_call:
+          description: Whether the call is a video call.
+          type: boolean
+        offline_call:
+          description: Whether the call is an offline call.
+          type: boolean
+        latency:
+          description: The latency of the call in milliseconds.
+          type: integer
+          format: int64
     Webhook:
       title: Webhook
       type: object
@@ -4444,29 +6195,20 @@ components:
         events:
           type: array
           items:
-            type: object
-            properties:
-              type:
-                type: string
-                enum:
-                  - message
-                  - ack
-                  - chat
-                  - status
-                  - service
-              method:
-                type: string
-                enum:
-                  - post
-                  - put
-                  - delete
-                  - patch
+            $ref: "#/components/schemas/Event"
           default:
             - type: message
               method: put
-          description: Tracked events. <br/>"message" - got new message;<br/>"ack" - got
-            message status;<br/>"chat" - got chat/dialog update;<br/>"status" -
-            instance status changed;<br/>"service" - special notifications
+          description: Tracked events. <br/>"messages" - got new message/got offline
+            messages/edit message/delete message;<br/>"statuses" - got message
+            status/got offline message status;<br/>"chats" - got chat/chat
+            update/chat remove;<br/>"contacts" - contact update;<br/>"presences"
+            - got presences<br/>"groups" - new group/participants update/group
+            update;<br/>"calls" - got call events<br/>labels" - new label/remove
+            label<br/>"users" - login user/logout user<br/>"channel" - instance
+            status changed/QR-code update<br/>"service" - special
+            notifications<br/><br/>"message", "ack", "chat", "status" - is
+            deprecated, use "messages", "statuses", "chats", "channel" instead.
         mode:
           type: string
           default: body
@@ -4491,43 +6233,6 @@ components:
         id:
           description: Button ID
           type: string
-    MessageContentReply:
-      title: Message content reply
-      type: object
-      properties:
-        type:
-          type: string
-          description: Type of message content
-          enum:
-            - list_reply
-            - buttons_reply
-        list_reply:
-          $ref: "#/components/schemas/ListReply"
-        buttons_reply:
-          $ref: "#/components/schemas/ButtonsReply"
-    ListReply:
-      title: Buttons reply
-      type: object
-      properties:
-        id:
-          type: string
-          description: Clicked list ID
-        title:
-          type: string
-          description: Clicked list title
-        description:
-          type: string
-          description: Clicked list description
-    ButtonsReply:
-      title: Buttons reply
-      type: object
-      properties:
-        id:
-          type: string
-          description: Clicked button ID
-        title:
-          type: string
-          description: Clicked button text
     WebhookContactProfile:
       title: Root Type for Webhook-Contact-Profile
       description: ""

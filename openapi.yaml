@@ -10,7 +10,7 @@ info:
     WhatsApp in private or group chats. Guides and SDK can be found on our
     website.
   title: WhatsApp API
-  version: 1.5.1
+  version: 1.7.1
   termsOfService: https://whapi.cloud/terms
 servers:
   - url: https://gate.whapi.cloud
@@ -34,6 +34,13 @@ tags:
     description: Contact presence
   - name: Groups
     description: Manage the groups of the channel
+  - name: Stories
+    description: WhatsApp Statuses (Stories) Functions
+  - name: Statuses
+    description: WhatsApp View Statuses (ACK) Functions.  Use for checking the view
+      status of the group message or story
+  - name: Newsletters
+    description: WhatsApp Channels Functions (Threads)
   - name: Media
     description: Manage the media of the channel
   - name: Business
@@ -208,7 +215,7 @@ paths:
       deprecated: false
       operationId: loginUserRowData
       summary: Login user with QR-rowdata
-  "/users/login/{PhoneNumber}":
+  /users/login/{PhoneNumber}:
     get:
       tags:
         - Users
@@ -250,11 +257,16 @@ paths:
     post:
       tags:
         - Users
-      parameters:
-        - $ref: "#/components/parameters/PhoneNumber"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestMobileLogin"
+        description: Request body for login mobile
+        required: true
       responses:
         "200":
-          $ref: "#/components/responses/AuthCode"
+          $ref: "#/components/responses/MobileLogin"
         "400":
           content:
             application/json:
@@ -266,7 +278,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Not acceptable for mobile type channel
+          description: Acceptable only for mobile type channel
         "409":
           content:
             application/json:
@@ -339,6 +351,44 @@ paths:
       deprecated: false
       operationId: updateUserProfile
       summary: Update user info
+  /users/{ContactID}/profile:
+    get:
+      tags:
+        - Users
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserProfile"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for getting user info
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified user not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getContactProfile
+      summary: Contact profile
   /messages/list:
     get:
       tags:
@@ -365,7 +415,7 @@ paths:
       deprecated: false
       operationId: getMessages
       summary: Get messages
-  "/messages/list/{ChatID}":
+  /messages/list/{ChatID}:
     get:
       tags:
         - Messages
@@ -450,6 +500,9 @@ paths:
       deprecated: false
       operationId: sendMessageText
       summary: 💬 Send text message
+      description: This endpoint will let you send messages to any WhatsApp-enabled
+        phone number or to any WhatsApp Group using your own number connected to
+        Whapi.Cloud
   /messages/image:
     post:
       tags:
@@ -578,6 +631,70 @@ paths:
       deprecated: false
       operationId: sendMessageVideo
       summary: 🎥 Send media-video message
+  /messages/short:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderShort"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderShort"
+        description: Message short
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageShort
+      summary: 📹 Send media-short video message (PTV)
   /messages/gif:
     post:
       tags:
@@ -1280,7 +1397,71 @@ paths:
       deprecated: false
       operationId: sendMessageSticker
       summary: 🎭 Send media-sticker message
-  "/messages/media/{MediaMessageType}":
+  /messages/story:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderStories"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderStories"
+        description: Stories post parameters
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for posting stories
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageStory
+      summary: 👁️‍🗨️ Send story message
+  /messages/media/{MediaMessageType}:
     post:
       tags:
         - Messages
@@ -1350,7 +1531,7 @@ paths:
         - 🎤 voice
         - 📄 document
         - 🎭 sticker
-  "/messages/{MessageID}":
+  /messages/{MessageID}:
     get:
       tags:
         - Messages
@@ -1488,7 +1669,7 @@ paths:
       deprecated: false
       operationId: deleteMessage
       summary: ❌ Delete message
-  "/messages/{MessageID}/reaction":
+  /messages/{MessageID}/reaction:
     put:
       tags:
         - Messages
@@ -1533,7 +1714,7 @@ paths:
       deprecated: false
       operationId: reactToMessage
       summary: 😍 React to message
-  "/messages/{MessageID}/star":
+  /messages/{MessageID}/star:
     put:
       tags:
         - Messages
@@ -1593,7 +1774,7 @@ paths:
       deprecated: false
       operationId: getChats
       summary: Get chats
-  "/chats/{ChatID}":
+  /chats/{ChatID}:
     get:
       tags:
         - Chats
@@ -1801,7 +1982,7 @@ paths:
       deprecated: false
       operationId: checkPhones
       summary: Check phones
-  "/contacts/{ContactID}":
+  /contacts/{ContactID}:
     get:
       tags:
         - Contacts
@@ -1944,7 +2125,7 @@ paths:
       deprecated: false
       operationId: sendMePresence
       summary: Send online or offline presence
-  "/presences/{ContactID}":
+  /presences/{ContactID}:
     get:
       tags:
         - Presences
@@ -2174,7 +2355,7 @@ paths:
       deprecated: false
       operationId: acceptGroupInvite
       summary: Accept group invite
-  "/groups/{GroupID}":
+  /groups/{GroupID}:
     get:
       tags:
         - Groups
@@ -2229,6 +2410,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
           description: Need channel authorization for update group
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: You do not have permissions for this action
         "404":
           content:
             application/json:
@@ -2271,7 +2458,7 @@ paths:
       deprecated: false
       operationId: leaveGroup
       summary: Leave group
-  "/groups/{GroupID}/invite":
+  /groups/{GroupID}/invite:
     get:
       tags:
         - Groups
@@ -2296,6 +2483,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
           description: Need channel authorization for create invite link
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: You do not have permissions for this action
         "404":
           content:
             application/json:
@@ -2338,7 +2531,7 @@ paths:
       deprecated: false
       operationId: revokeGroupInvite
       summary: Revoke group invite
-  "/groups/{GroupID}/participants":
+  /groups/{GroupID}/participants:
     post:
       requestBody:
         $ref: "#/components/requestBodies/ListParticipants"
@@ -2349,7 +2542,7 @@ paths:
         - $ref: "#/components/parameters/GroupID"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          $ref: "#/components/responses/ListParticipants"
         "400":
           content:
             application/json:
@@ -2425,7 +2618,7 @@ paths:
       deprecated: false
       operationId: removeGroupParticipant
       summary: Remove group participant
-  "/groups/{GroupID}/icon":
+  /groups/{GroupID}/icon:
     get:
       tags:
         - Groups
@@ -2452,6 +2645,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
           description: Need channel authorization for get group icon
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: You do not have permissions for this action
         "404":
           content:
             application/json:
@@ -2539,7 +2738,7 @@ paths:
       deprecated: false
       operationId: deleteGroupIcon
       summary: Delete group icon
-  "/groups/{GroupID}/admins":
+  /groups/{GroupID}/admins:
     delete:
       requestBody:
         $ref: "#/components/requestBodies/ListParticipants"
@@ -2618,6 +2817,383 @@ paths:
       deprecated: false
       operationId: promoteToGroupAdmin
       summary: Promote to group admin
+  /stories:
+    get:
+      tags:
+        - Stories
+      parameters:
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/time_from"
+        - $ref: "#/components/parameters/time_to"
+        - $ref: "#/components/parameters/normal_types"
+        - $ref: "#/components/parameters/author"
+        - $ref: "#/components/parameters/from_me"
+      responses:
+        "200":
+          $ref: "#/components/responses/Messages"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getStories
+      summary: Get list of stories
+    post:
+      tags:
+        - Stories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderStories"
+        description: Stories post parameters
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for posting stories
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: createStory
+      summary: Create & publish story
+  /statuses/{MessageID}:
+    get:
+      tags:
+        - Statuses
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Statuses"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified message not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getMessageViewStatuses
+      summary: Get message or story view statuses
+  /newsletters:
+    get:
+      tags:
+        - Newsletters
+      parameters:
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+      responses:
+        "200":
+          $ref: "#/components/responses/Newsletters"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getNewsletters
+      summary: Get newsletters
+    post:
+      tags:
+        - Newsletters
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNewsletterRequest"
+            example:
+              name: <Newsletter Title>
+        description: Newsletter data
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Newsletter"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for add group
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified participant not found in contacts list
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: createNewsletter
+      summary: Create newsletter
+  /newsletters/find:
+    get:
+      tags:
+        - Newsletters
+      parameters:
+        - $ref: "#/components/parameters/country_code"
+        - $ref: "#/components/parameters/search"
+        - $ref: "#/components/parameters/newsletter_field"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/sort"
+      responses:
+        "200":
+          $ref: "#/components/responses/NewslettersListPaged"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified newsletter not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: findNewsletter
+      summary: Find newsletters by filters
+  /newsletters/recommended:
+    get:
+      tags:
+        - Newsletters
+      parameters:
+        - $ref: "#/components/parameters/country_code"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/count"
+      responses:
+        "200":
+          $ref: "#/components/responses/NewslettersListPaged"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified newsletter not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: recommendedNewsletter
+      summary: Get recommended newsletters by country
+  /newsletters/{NewsletterID}:
+    get:
+      tags:
+        - Newsletters
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+        - $ref: "#/components/parameters/role"
+      responses:
+        "200":
+          $ref: "#/components/responses/Messages"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified newsletter not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getNewsletter
+      summary: Get newsletter information
+    delete:
+      tags:
+        - Newsletters
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need to be owner of newsletter
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified newsletter not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deleteNewsletter
+      summary: Delete newsletter
+  /newsletters/{NewsletterID}/subscription:
+    post:
+      tags:
+        - Newsletters
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified newsletter not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: subscribeNewsletter
+      summary: Subscribe to newsletter
+    delete:
+      tags:
+        - Newsletters
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified newsletter not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: unsubscribeNewsletter
+      summary: Unsubscribe from newsletter
+  /newsletters/{NewsletterID}/messages:
+    get:
+      tags:
+        - Newsletters
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/before"
+      responses:
+        "200":
+          $ref: "#/components/responses/Messages"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified newsletter not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getMessagesNewsletter
+      summary: Get newsletter messages
   /media:
     post:
       requestBody:
@@ -2648,7 +3224,7 @@ paths:
       deprecated: false
       operationId: uploadMedia
       summary: Upload media
-  "/media/{MediaID}":
+  /media/{MediaID}:
     get:
       tags:
         - Media
@@ -2699,7 +3275,7 @@ paths:
       deprecated: false
       operationId: deleteMedia
       summary: Delete media
-  "/blacklist/{ContactID}":
+  /blacklist/{ContactID}:
     put:
       tags:
         - Blacklist
@@ -2777,7 +3353,76 @@ paths:
       deprecated: false
       operationId: getProducts
       summary: Get products
-  "/business/products/{ProductID}":
+    post:
+      tags:
+        - Business
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductCreate"
+        description: Request body
+      responses:
+        "200":
+          $ref: "#/components/responses/Product"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for getting products
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: createProduct
+      summary: Create product
+  /business/{ContactID}/products:
+    get:
+      tags:
+        - Business
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+      responses:
+        "200":
+          $ref: "#/components/responses/Products"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for getting products
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified user not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getContactProducts
+      summary: Get products
+  /business/products/{ProductID}:
     get:
       tags:
         - Business
@@ -2856,7 +3501,92 @@ paths:
       deprecated: false
       operationId: sendProduct
       summary: Send product
-  "/business/orders/{OrderID}":
+    patch:
+      tags:
+        - Business
+      parameters:
+        - $ref: "#/components/parameters/ProductID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductEdit"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ProductEdit"
+        description: Message product
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Product"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for update product
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified product not found
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: updateProduct
+      summary: Update product
+      description: The *images* field is required and must contain all images
+    delete:
+      tags:
+        - Business
+      parameters:
+        - $ref: "#/components/parameters/ProductID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for update product
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified product not found
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deleteProduct
+      summary: Delete product
+  /business/orders/{OrderID}:
     get:
       tags:
         - Business
@@ -2907,7 +3637,7 @@ paths:
       deprecated: false
       operationId: getLabels
       summary: Get labels
-  "/labels/{LabelID}":
+  /labels/{LabelID}:
     get:
       tags:
         - Labels
@@ -2933,7 +3663,7 @@ paths:
       deprecated: false
       operationId: getLabelAssociations
       summary: Get objects associated with label
-  "/labels/{LabelID}/{AssociationID}":
+  /labels/{LabelID}/{AssociationID}:
     post:
       tags:
         - Labels
@@ -3041,7 +3771,8 @@ components:
       in: query
     channel_type:
       name: channel_type
-      description: null
+      description: Channel type. Web - for linking existing WA account via WA Web,
+        Mobile - for creating new WA account
       schema:
         type: string
         enum:
@@ -3054,6 +3785,15 @@ components:
       style: simple
       explode: false
       description: Phone number without + and spaces, only digits
+      schema:
+        $ref: "#/components/schemas/ContactID"
+      in: path
+      required: true
+    ContactID:
+      name: ContactID
+      style: simple
+      explode: false
+      description: Contact ID
       schema:
         $ref: "#/components/schemas/ContactID"
       in: path
@@ -3141,15 +3881,6 @@ components:
         $ref: "#/components/schemas/MessageID"
       in: path
       required: true
-    ContactID:
-      name: ContactID
-      style: simple
-      explode: false
-      description: Contact ID
-      schema:
-        $ref: "#/components/schemas/ContactID"
-      in: path
-      required: true
     GroupID:
       name: GroupID
       style: simple
@@ -3159,6 +3890,72 @@ components:
         $ref: "#/components/schemas/GroupID"
       in: path
       required: true
+    country_code:
+      name: country_code
+      description: Country for search
+      example: null
+      schema:
+        type: string
+      in: query
+    search:
+      name: search
+      description: Search word
+      example: null
+      schema:
+        type: string
+      in: query
+    newsletter_field:
+      name: newsletter_field
+      description: Cursor to continue pagination
+      schema:
+        type: string
+        enum:
+          - creation_time
+          - subscribers
+      in: query
+    cursor:
+      name: cursor
+      description: Cursor to continue pagination
+      example: null
+      schema:
+        type: string
+      in: query
+    sort:
+      name: order
+      description: Order for items in request
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+      in: query
+    NewsletterID:
+      name: NewsletterID
+      style: simple
+      explode: false
+      description: Newsletter ID
+      schema:
+        $ref: "#/components/schemas/NewsletterID"
+      in: path
+      required: true
+    role:
+      name: user role
+      description: User's role regarding the newsletter
+      schema:
+        type: string
+        enum:
+          - subscriber
+          - admin
+          - guest
+          - owner
+      in: query
+    before:
+      name: before
+      description: Top limit for selection
+      schema:
+        type: number
+        minimum: 0
+      in: query
     MediaID:
       name: MediaID
       style: simple
@@ -3230,6 +4027,7 @@ components:
                 - image
                 - document
                 - audio
+              init_avatars: true
             webhooks:
               - url: <Webhook URL, http or https>
                 events:
@@ -3384,6 +4182,12 @@ components:
           schema:
             $ref: "#/components/schemas/AuthCode"
       description: OK
+    MobileLogin:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MobileLoginStatus"
+      description: OK
     UserProfile:
       content:
         application/json:
@@ -3453,6 +4257,50 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Group"
+      description: OK
+    ListParticipants:
+      content:
+        application/json:
+          schema:
+            title: ResponseListParticipants
+            type: object
+            properties:
+              success:
+                type: boolean
+              failed:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContactID"
+              processed:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContactID"
+            required:
+              - result
+            example:
+              success: true
+              failed:
+                - 1234567890
+              processed:
+                - 1234567890
+      description: OK
+    Statuses:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StatusesList"
+      description: OK
+    Newsletters:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NewslettersList"
+      description: OK
+    NewslettersListPaged:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NewslettersListPaged"
       description: OK
     Media:
       content:
@@ -3595,7 +4443,7 @@ components:
           description: The messages statuses array contains all statuses that were sent to
             the webhook URL. Sent on event "statuses.post" or "statuses.put"
           items:
-            $ref: "#/components/schemas/WebhookStatus"
+            $ref: "#/components/schemas/Status"
         chats:
           type: array
           description: The chats array contains all chats that were sent to the webhook
@@ -3684,6 +4532,27 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Event"
+    RequestMobileLogin:
+      title: Request Mobile Login
+      description: Request a login code to be sent to the user's phone number. The
+        code is valid for 5 minutes.
+      type: object
+      required:
+        - phone_number
+      properties:
+        phone_number:
+          $ref: "#/components/schemas/ContactID"
+          description: The phone number to send the code (WA Contact ID)
+        method:
+          $ref: "#/components/schemas/MobileLoginMethod"
+        captcha_code:
+          type: string
+          description: The captcha code
+          example: 123456
+        code:
+          type: string
+          description: The auth code
+          example: 123456
     UserProfileUpdate:
       title: UserProfile request body
       type: object
@@ -3717,6 +4586,9 @@ components:
               default: 0
               minimum: 0
               maximum: 60
+            no_link_preview:
+              type: boolean
+              description: Set "true" if necessary to send the link without preview
         - $ref: "#/components/schemas/Mentions"
         - $ref: "#/components/schemas/ViewOnce"
     SenderImage:
@@ -3734,6 +4606,19 @@ components:
         - $ref: "#/components/schemas/ViewOnce"
     SenderVideo:
       title: Message video send parameters
+      type: object
+      required:
+        - to
+        - media
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+        - $ref: "#/components/schemas/Size"
+        - $ref: "#/components/schemas/Mentions"
+        - $ref: "#/components/schemas/ViewOnce"
+    SenderShort:
+      title: Message short video send parameters
       type: object
       required:
         - to
@@ -3768,6 +4653,13 @@ components:
         - $ref: "#/components/schemas/Sender"
         - $ref: "#/components/schemas/SendMedia"
         - $ref: "#/components/schemas/MessagePropsAudio"
+        - properties:
+            background_color:
+              type: string
+              description: Background color of the story (ARGB)
+              pattern: ^#[0-9a-fA-F]{6,8}$
+              example: "#FF000000"
+              default: "#00000000"
         - $ref: "#/components/schemas/ViewOnce"
     SenderVoice:
       title: Message voice send parameters
@@ -3830,7 +4722,7 @@ components:
       title: Message contact send parameters
       type: object
       required:
-        - to
+        - name
         - vcard
       allOf:
         - $ref: "#/components/schemas/Sender"
@@ -3840,7 +4732,7 @@ components:
       type: object
       required:
         - to
-        - contacts
+        - list
       allOf:
         - $ref: "#/components/schemas/Sender"
         - $ref: "#/components/schemas/MessageContentContacts"
@@ -3876,6 +4768,45 @@ components:
         - $ref: "#/components/schemas/MessagePropsSticker"
         - $ref: "#/components/schemas/Size"
         - $ref: "#/components/schemas/ViewOnce"
+    SenderStories:
+      title: Stories post parameters
+      type: object
+      required:
+        - contacts
+      allOf:
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+        - $ref: "#/components/schemas/Size"
+        - properties:
+            contacts:
+              type: array
+              description: List of contacts to send the story to
+              items:
+                $ref: "#/components/schemas/ContactID"
+            background_color:
+              type: string
+              description: Background color of the story (ARGB)
+              pattern: ^#[0-9a-fA-F]{6,8}$
+              example: "#FF000000"
+              default: "#00000000"
+            caption_color:
+              type: string
+              description: Caption color of the story (ARGB)
+              pattern: ^#[0-9a-fA-F]{6,8}$
+              example: "#FF000000"
+              default: "#FFFFFFFF"
+            font_type:
+              type: string
+              description: Font style of the story
+              enum:
+                - SYSTEM
+                - SYSTEM_TEXT
+                - FB_SCRIPT
+                - SYSTEM_BOLD
+                - MORNINGBREEZE_REGULAR
+                - CALISTOGA_REGULAR
+                - EXO2_EXTRABOLD
+                - COURIERPRIME_BOLD
     ForwardMessage:
       title: Forward message parameters
       required:
@@ -4118,15 +5049,77 @@ components:
           $ref: "#/components/schemas/GroupID"
     UpdateGroupInfoRequest:
       title: Update group info request
-      required:
-        - subject
-        - description
       type: object
       properties:
         subject:
           type: string
         description:
           type: string
+    CreateNewsletterRequest:
+      title: Create newsletter request
+      type: object
+      properties:
+        name:
+          type: string
+          example: <Newsletter Title>
+        description:
+          type: string
+          example: <Newsletter Description>
+        newsletter_pic:
+          type: string
+          example: <Newsletter Picture in base64>
+      required:
+        - name
+    Newsletter:
+      title: Newsletter
+      type: object
+      required:
+        - id
+        - type
+        - name
+      allOf:
+        - $ref: "#/components/schemas/Chat"
+        - properties:
+            name:
+              type: string
+              description: Newsletter name
+              example: Newsletter name
+            name_at:
+              type: integer
+              description: Newsletter name change timestamp
+              example: 1675964377
+            description:
+              type: string
+              description: Newsletter description
+              example: Newsletter description
+            description_at:
+              type: string
+              description: Newsletter description change timestamp
+              example: Newsletter description ID
+            subscribers_count:
+              type: integer
+              description: Newsletter subscribers count
+              example: 2
+            created_at:
+              type: integer
+              description: Newsletter creation timestamp
+              example: 1675964377
+            invite_code:
+              type: string
+              description: Newsletter invite code
+              example: Newsletter invite code
+            handle:
+              type: string
+              description: Newsletter handle
+              example: Newsletter handle
+            verification:
+              type: boolean
+              description: Is newsletter verified
+              example: true
+            preview:
+              type: string
+              description: Newsletter preview URL
+              example: https://example.com/photo.jpg
     UploadMediaResponse:
       title: Upload media response
       description: ""
@@ -4136,6 +5129,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UploadMedia"
+    ProductCreate:
+      title: Product item
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/ProductEdit"
+      required:
+        - price
+        - currency
+        - images
+        - name
+        - description
     SenderProductFromCatalog:
       title: Message product from catalog send parameters
       type: object
@@ -4147,6 +5151,47 @@ components:
             catalog_id:
               description: Catalog ID
               type: string
+    ProductEdit:
+      title: Product item
+      type: object
+      properties:
+        product_retailer_id:
+          description: Product Retailer ID
+          type: string
+        currency:
+          $ref: "#/components/schemas/Currency"
+        images:
+          description: Product images urls
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          maxItems: 10
+        availability:
+          description: Product availability
+          type: string
+          enum:
+            - in stock
+            - out of stock
+        name:
+          description: Product name
+          type: string
+        url:
+          description: Product url
+          type: string
+        description:
+          description: Product description
+          type: string
+        price:
+          description: Product price
+          type: number
+          minimum: 0
+        is_hidden:
+          description: Product is hidden
+          type: boolean
+      required:
+        - images
     MessageID:
       type: string
       description: Message ID
@@ -4170,7 +5215,7 @@ components:
     MediaID:
       type: string
       description: Media ID
-      pattern: ^[a-zA-Z]+-[0-9a-fA-F-]+$
+      pattern: ^[a-zA-Z0-9]+-[0-9a-fA-F-]+$
     MediaMessageType:
       type: string
       description: Media message type
@@ -4182,14 +5227,18 @@ components:
         - voice
         - document
         - sticker
+    NewsletterID:
+      type: string
+      description: Newsletter ID
+      pattern: ^[\d]{10,18}@newsletter$
     OrderID:
       type: string
       description: Order ID
-      pattern: ^([\d]{10,15})?$
+      pattern: ^([\d]{10,18})?$
     ProductID:
       type: string
       description: Product ID
-      pattern: ^([\d]{10,16})?$
+      pattern: ^([\d]{10,18})?$
     SenderMedia:
       title: Sender media
       type: object
@@ -4225,16 +5274,17 @@ components:
             this value each time a callback fails to get a HTTPS 200 OK
             response. The backoff delay is capped by the
             max_callback_backoff_delay_ms setting.
-          default: 3000
           type: number
+          minimum: 3000
+          maximum: 15000
         max_callback_backoff_delay_ms:
           description: Maximum delay for a failed callback in milliseconds
-          default: 900000
           type: number
+          minimum: 600000
+          maximum: 3600000
         callback_persist:
           description: Stores callbacks on disk until they are successfully acknowledged
             by the Webhook or not. Restart required.
-          default: true
           type: boolean
         media:
           $ref: "#/components/schemas/MediaSettings"
@@ -4264,6 +5314,17 @@ components:
           description: Set to valid WhatsApp Group with users who wish to see alerts for
             critical errors and messages.
           type: string
+        offline_mode:
+          description: When true, API will not send online status to the server on
+            connection. If you want to receive push-notifications on other
+            devices, you should set this to false. Working  after reconnect.
+          default: false
+          type: boolean
+        full_history:
+          description: When true, all messages will be cached after the connection. If
+            false, only new messages will be cached. Working after reconnect.
+          default: false
+          type: boolean
     QRParameters:
       title: QR code parameters
       type: object
@@ -4290,13 +5351,14 @@ components:
           default: "#ffffff"
     AuthCode:
       title: Auth code
-      description: The auth code is the code that is used to authenticate in whatsapp
+      description: The auth code is the code that is sent to the user's phone app to
+        authenticate the user.
       type: object
       properties:
         code:
           type: string
           description: The auth code
-          example: 123456
+          example: 123-456
     Chat:
       title: Chat
       type: object
@@ -4318,6 +5380,7 @@ components:
             - group
             - contact
             - broadcast
+            - newsletter
         timestamp:
           type: integer
           description: Chat timestamp
@@ -4325,6 +5388,10 @@ components:
         chat_pic:
           type: string
           description: Chat picture URL
+          example: https://example.com/photo.jpg
+        chat_pic_full:
+          type: string
+          description: Chat full picture URL
           example: https://example.com/photo.jpg
         pin:
           type: boolean
@@ -4393,6 +5460,9 @@ components:
         profile_pic:
           type: string
           description: Profile picture URL
+        profile_pic_full:
+          type: string
+          description: Profile full picture URL
         status:
           type: string
           description: Contact status
@@ -4429,6 +5499,16 @@ components:
         uptime:
           type: number
           description: Seconds have passed since the start of the instance.
+        version:
+          type: string
+          description: Channel version
+        device_id:
+          type: number
+          description: Current device ID
+        ip:
+          type: string
+          format: ipv4
+          description: Current channel ip-address
         status:
           $ref: "#/components/schemas/ChannelStatus"
         user:
@@ -4471,10 +5551,15 @@ components:
           type: integer
           description: Maximum number of check phone numbers
           example: 100
+        requests:
+          type: integer
+          description: Maximum number of channel requests
+          example: 1000
       required:
         - messages
         - chats
         - checks
+        - requests
     Message:
       title: Message
       required:
@@ -4510,13 +5595,18 @@ components:
         timestamp:
           type: number
           description: Message timestamp
+        device_id:
+          type: number
+          description: Device ID, if the message was not sent through the app
         status:
-          $ref: "#/components/schemas/MessageStatus"
+          $ref: "#/components/schemas/StatusEnum"
         text:
           $ref: "#/components/schemas/MessageContentText"
         image:
           $ref: "#/components/schemas/MessageContentImage"
         video:
+          $ref: "#/components/schemas/MessageContentVideo"
+        short:
           $ref: "#/components/schemas/MessageContentVideo"
         gif:
           $ref: "#/components/schemas/MessageContentVideo"
@@ -4584,6 +5674,83 @@ components:
           format: int32
           description: Offset of requested messages
           default: 0
+    MobileLoginStatus:
+      title: Mobile Login status
+      description: ""
+      type: object
+      required:
+        - phone_number
+        - method
+      properties:
+        phone_number:
+          type: object
+          description: Parsed phone number
+          properties:
+            country:
+              type: string
+              description: Country of the phone number
+              example: TR
+            e164_format:
+              type: string
+              description: Phone number in E164 format
+              example: 901234567890
+            international_format:
+              type: string
+              description: Phone number in international format
+              example: +90 123 456 78 90
+            national_format:
+              type: string
+              description: Phone number in national format
+              example: 0123 456 78 90
+            country_code:
+              type: string
+              description: Country code
+              example: 90
+            national_number:
+              type: string
+              description: Phone number
+              example: 1234567890
+            mcc:
+              type: string
+              description: Mobile Country Code
+              example: 286
+        method:
+          $ref: "#/components/schemas/MobileLoginMethod"
+        captcha:
+          type: string
+          description: Captcha code in base64
+        status:
+          type: string
+          description: Login status
+          example: sent
+          enum:
+            - waiting_code
+            - error
+            - captcha_required
+            - completed
+        error:
+          type: string
+          description: Error message
+          example: Error message
+    NewslettersList:
+      title: List of newsletters
+      type: object
+      allOf:
+        - type: object
+          properties:
+            newsletters:
+              $ref: "#/components/schemas/Newsletters"
+        - $ref: "#/components/schemas/Iterator"
+    NewslettersListPaged:
+      title: Paged list of newsletters
+      type: object
+      allOf:
+        - type: object
+          properties:
+            newsletters:
+              $ref: "#/components/schemas/Newsletters"
+            page_info:
+              $ref: "#/components/schemas/Paging"
     OrderItems:
       title: Order items
       type: object
@@ -4615,44 +5782,17 @@ components:
     Product:
       title: Product item
       type: object
-      properties:
-        product_retailer_id:
-          description: Product ID
-          type: string
-        currency:
-          $ref: "#/components/schemas/Currency"
-        images:
-          description: Product images urls
-          type: array
-          items:
-            type: string
-            format: uri
-        review:
-          description: Product review status
-          type: object
-        availability:
-          description: Product availability
-          type: string
-          enum:
-            - in stock
-            - out of stock
-        name:
-          description: Product name
-          type: string
-        url:
-          description: Product url
-          type: string
-        description:
-          description: Product description
-          type: string
-        price:
-          description: Product price
-          type: number
-        is_hidden:
-          description: Product is hidden
-          type: boolean
+      allOf:
+        - properties:
+            id:
+              description: Product ID
+              type: string
+            review:
+              description: Product review status
+              type: object
+        - $ref: "#/components/schemas/ProductEdit"
       required:
-        - product_retailer_id
+        - id
         - price
         - currency
         - images
@@ -4680,6 +5820,14 @@ components:
           example: true
         message:
           $ref: "#/components/schemas/Message"
+    StatusesList:
+      title: List of view statuses
+      type: object
+      allOf:
+        - type: object
+          properties:
+            statuses:
+              $ref: "#/components/schemas/Statuses"
     ResponseSuccess:
       title: ResponseSuccess
       type: object
@@ -4752,6 +5900,9 @@ components:
         icon:
           type: string
           description: Profile preview icon url.
+        icon_full:
+          type: string
+          description: Profile avatar url.
     Label:
       title: Label
       type: object
@@ -4940,6 +6091,7 @@ components:
         - gif
         - audio
         - voice
+        - short
         - document
         - link_preview
         - location
@@ -4958,6 +6110,7 @@ components:
         - poll
         - hsm
         - order
+        - story
     MessageSource:
       default: text
       type: string
@@ -4968,7 +6121,7 @@ components:
         - api
         - system
         - business_api
-    MessageStatus:
+    StatusEnum:
       type: string
       description: Message ack status
       enum:
@@ -5312,6 +6465,7 @@ components:
           description: Type of action
           type: string
           enum:
+            - edited
             - edit
             - delete
             - reaction
@@ -5366,8 +6520,7 @@ components:
       title: Message reactions
       type: object
       required:
-        - id
-        - text
+        - emoji
       properties:
         id:
           type: string
@@ -5383,6 +6536,9 @@ components:
         unread:
           type: boolean
           description: Is reaction unread
+        count:
+          type: number
+          description: Reaction count
     MessageContent:
       title: Message content
       type: object
@@ -5439,7 +6595,7 @@ components:
           description: Checksum
           type: string
     MessagePropsVoice:
-      title: Message gif unique parameters
+      title: Message audio unique parameters
       type: object
       allOf:
         - $ref: "#/components/schemas/MessagePropsAudio"
@@ -5459,9 +6615,6 @@ components:
     VCard:
       title: VCard
       type: object
-      required:
-        - name
-        - vcard
       properties:
         name:
           description: Name of contact
@@ -5536,26 +6689,6 @@ components:
       title: Message interactive unique parameters
       type: object
       properties:
-        type:
-          $ref: "#/components/schemas/InteractiveType"
-        header:
-          type: object
-          description: Header of interactive message (required for type product_list)
-          properties:
-            type:
-              $ref: "#/components/schemas/HeaderType"
-            text:
-              type: string
-              description: Text of header
-            image:
-              type: string
-              description: Image of header (for sending use media parameter)
-            video:
-              type: string
-              description: Image of header (for sending use media parameter)
-            document:
-              type: string
-              description: Image of header (for sending use media parameter)
         body:
           type: object
           description: Body of interactive
@@ -5811,29 +6944,12 @@ components:
                     catalog_id:
                       description: Catalog ID
                       type: string
-                    product_retailer_id:
-                      description: Product retailer ID
+                    product_id:
+                      description: Product ID
                       type: string
         button:
           description: Button text for list of message
           type: string
-    InteractiveType:
-      default: text
-      type: string
-      description: Interactive type
-      enum:
-        - list
-        - button
-        - product
-    HeaderType:
-      default: text
-      type: string
-      description: Interactive type
-      enum:
-        - text
-        - image
-        - video
-        - document
     ActionProduct:
       title: Product fields
       type: object
@@ -5841,8 +6957,8 @@ components:
         catalog_id:
           description: Catalog ID
           type: string
-        product_retailer_id:
-          description: Product retailer ID
+        product_id:
+          description: Product ID
           type: string
     MessagePropsAudio:
       title: Message audio unique parameters
@@ -5861,12 +6977,44 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Message"
+    MobileLoginMethod:
+      title: Mobile Login method
+      type: string
+      description: The method to receive the one time code (sms or voice)
+      enum:
+        - voice
+        - sms
+      default: sms
+    Newsletters:
+      title: Newsletters
+      type: array
+      items:
+        $ref: "#/components/schemas/Newsletter"
+    Paging:
+      title: Paging
+      type: object
+      properties:
+        end_cursor:
+          type: string
+          description: Cursor for next page
+        start_cursor:
+          type: string
+          description: Cursor of the current page
+        next_page:
+          type: boolean
+          description: Does next page exit
+        previous_page:
+          type: boolean
+          description: Does previous page exit
     ProductItem:
       title: Product item
       type: object
       properties:
-        product_retailer_id:
+        id:
           description: Product ID
+          type: string
+        product_retailer_id:
+          description: Product Retailer ID
           type: string
         name:
           description: Product name
@@ -5919,7 +7067,10 @@ components:
       properties:
         to:
           type: string
-          description: Chat ID or phone number where the message will be sent
+          description: Use the phone number or Chat ID of the contact/group to which you
+            want to send the message. Use [Get
+            groups](https://whapi.readme.io/reference/getgroups) to get the
+            group ID.
           pattern: ^[\d-]{10,31}(@[\w\.]{1,})?$
           example: 1234567891@s.whatsapp.net
         quoted:
@@ -5973,7 +7124,7 @@ components:
           type: array
           items:
             type: string
-            pattern: ^\d{10,15}@s\.whatsapp\.net$
+            pattern: ^\d{7,15}(@s\.whatsapp\.net)?$
           description: Whatsapp IDs of mentioned users
     MediaWithUploadFromFile:
       title: Media with upload from file
@@ -6010,11 +7161,19 @@ components:
               - document
               - sticker
             type: string
+        init_avatars:
+          description: Set to true if you need to get avatars after channel authorization
+          type: boolean
     Webhooks:
       title: Webhooks
       type: array
       items:
         $ref: "#/components/schemas/Webhook"
+    Statuses:
+      title: Statuses
+      type: array
+      items:
+        $ref: "#/components/schemas/Status"
     UploadMedia:
       title: Uploaded media
       description: ""
@@ -6053,10 +7212,15 @@ components:
           type: array
           items:
             type: string
-    WebhookStatus:
-      title: Webhook message status
+    Status:
+      title: View status
       description: ""
       type: object
+      required:
+        - id
+        - code
+        - status
+        - timestamp
       properties:
         errors:
           type: array
@@ -6065,11 +7229,15 @@ components:
         id:
           description: Message ID from event
           type: string
-        recipient_id:
-          description: WhatsApp ID of recipient
-          type: string
+        code:
+          type: number
+          description: Status code
         status:
-          $ref: "#/components/schemas/MessageStatus"
+          $ref: "#/components/schemas/StatusEnum"
+        recipient_id:
+          $ref: "#/components/schemas/ChatID"
+        viewer_id:
+          $ref: "#/components/schemas/ContactID"
         timestamp:
           description: Timestamp of the status message
           type: string

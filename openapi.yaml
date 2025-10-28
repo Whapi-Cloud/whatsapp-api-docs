@@ -51,6 +51,8 @@ tags:
     description: WhatsApp Blacklist Functions
   - name: Communities
     description: WhatsApp Communities Functions
+  - name: Bots
+    description: WhatsApp Bots Functions
 paths:
   /health:
     get:
@@ -180,7 +182,7 @@ paths:
       deprecated: false
       operationId: webhookTest
       summary: Test webhook
-      description: For testing webhook.
+      description: Sends a test webhook callback to the specified URL.
   /users/login:
     get:
       tags:
@@ -316,64 +318,6 @@ paths:
       description: This method returns a code that allows you to connect the phone
         number to the API without the need to scan a QR code, simply by entering
         the generated code.
-  /users/login/mobile:
-    post:
-      tags:
-        - Users
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RequestMobileLogin"
-        description: Request body for login mobile
-        required: true
-      responses:
-        "200":
-          $ref: "#/components/responses/MobileLogin"
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Invalid phone number
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Forbidden without a proxy
-        "406":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Acceptable only for mobile type channel
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Channel already authenticated
-        "412":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: A different phone number has been provided. To authorize with a new
-            number, please logout and initiate mobile login process again
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Render QR failed
-        "500":
-          $ref: "#/components/responses/Error"
-      deprecated: false
-      operationId: loginUserViaMobile
-      summary: Login in whatsapp with phone number
-      description: Allows you to register a number on WhatsApp. Requires mandatory use
-        of mobile proxies!
   /users/logout:
     post:
       tags:
@@ -432,6 +376,38 @@ paths:
       summary: Update user info
       description: This method is responsible for changing the details of your
         WhatsApp profile
+  /status:
+    put:
+      tags:
+        - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeStatusRequest"
+        description: New about text
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: changeStatus
+      summary: Change status text
+      description: Updates the "About" text of the account
   /messages/list:
     get:
       tags:
@@ -508,13 +484,16 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderText"
+            example:
+              to: "61371989950"
+              body: Hello, this message was sent via API!
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderText"
         description: Message text
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -556,7 +535,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageText
-      summary: ðŸ’¬ Send text message
+      summary: 💬 Send text message
       description: This endpoint will let you send messages to any WhatsApp-enabled
         phone number or to any WhatsApp Group/Channel using your own number
         connected to Whapi.Cloud. Follow the instructions if you want to [format
@@ -573,13 +552,17 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderImage"
+            example:
+              to: "61371989950"
+              caption: Hello, this message was sent via API!
+              media: https://upload.wikimedia.org/wikipedia/commons/3/3f/JPEG_example_flower.jpg
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderImage"
         description: Message image
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -633,7 +616,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageImage
-      summary: ðŸ–¼ Send media-image message
+      summary: 🖼 Send media-image message
       description: This method is responsible for sending images for chats. The
         requirements for [sending all media types are
         identical](https://support.whapi.cloud/help-desk/sending/send-video-audio-image-document)
@@ -646,13 +629,17 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderVideo"
+            example:
+              to: "61371989950"
+              caption: Hello, this message was sent via API!
+              media: https://whapi.cloud/assets/img/example/example.mp4
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderVideo"
         description: Message video
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -706,7 +693,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageVideo
-      summary: ðŸŽ¥ Send media-video message
+      summary: 🎥 Send media-video message
       description: This method is responsible for sending a video message for chats.
         The requirements for [sending all media types are
         identical](https://support.whapi.cloud/help-desk/sending/send-video-audio-image-document)
@@ -719,13 +706,16 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderShort"
+              example:
+                to: "61371989950"
+                media: https://whapi.cloud/assets/img/example/example.mp4
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderShort"
         description: Message short
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -779,7 +769,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageShort
-      summary: ðŸ“¹ Send media-short video message (PTV)
+      summary: 📹 Send media-short video message (PTV)
       description: This method is responsible for sending a short video in the circle
         for chats. The requirements for [sending all media types are
         identical](https://support.whapi.cloud/help-desk/sending/send-video-audio-image-document)
@@ -792,13 +782,16 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderGif"
+              example:
+                to: "61371989950"
+                media: https://theminimalistfisherman.com/wp-content/uploads/2024/01/confused-cat-gif.gif
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderGif"
         description: Message gif
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -852,7 +845,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageGif
-      summary: ðŸŽ¬ Send media-gif message
+      summary: 🎬 Send media-gif message
       description: Method responsible for sending GIFs to your chats through the API
         (The file to be sent must be an MP4)
   /messages/audio:
@@ -864,13 +857,16 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderAudio"
+              example:
+                to: "61371989950"
+                media: https://filesamples.com/samples/audio/mp3/sample1.mp3
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderAudio"
         description: Message audio
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -924,7 +920,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageAudio
-      summary: ðŸŽµ Send media-audio message
+      summary: 🎵 Send media-audio message
       description: This method is responsible for sending audio messages for chats.
         The requirements for [sending all media types are
         identical](https://support.whapi.cloud/help-desk/sending/send-video-audio-image-document)
@@ -937,13 +933,16 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderVoice"
+            example:
+              to: "61371989950"
+              media: https://upload.wikimedia.org/wikipedia/commons/c/c8/Example.ogg
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderVoice"
         description: Message voice
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -997,7 +996,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageVoice
-      summary: ðŸŽ¤ Send media-voice message
+      summary: 🎤 Send media-voice message
       description: This method is responsible for sending a voice message for chats.
         The requirements for [sending all media types are
         identical](https://support.whapi.cloud/help-desk/sending/send-video-audio-image-document).
@@ -1013,13 +1012,18 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderDocument"
+              example:
+                to: "61371989950"
+                media: https://filesamples.com/samples/document/pdf/sample2.pdf
+                filename: Example
+                caption: Text caption under the document
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderDocument"
         description: Message document
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1073,7 +1077,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageDocument
-      summary: ðŸ“‘ Send media-document message
+      summary: 📑 Send media-document message
       description: This method is responsible for sending documents for chats. The
         requirements for [sending all media types are
         identical](https://support.whapi.cloud/help-desk/sending/send-video-audio-image-document)
@@ -1086,13 +1090,20 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderLinkPreview"
+            example:
+              to: "61371989950"
+              body: Here you can write text about a page on this site. It is important that
+                this text must contain a link to be sent in the message!
+                https://whapi.cloud/features
+              title: The title of your link
+              media: https://whapi.cloud/assets/img/content/whatsapp-cloud-api.png
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderLinkPreview"
         description: Message link preview send parameters
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1146,7 +1157,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageLinkPreview
-      summary: ðŸ“Ž Send link preview message
+      summary: 📎 Send link preview message
       description: Method responsible for sending links with customize preview to your
         contacts, it is used to share links so that the user can be redirected
         to a website. Your link must necessarily be in the Body parameter. It is
@@ -1169,7 +1180,7 @@ paths:
         description: Message location
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1211,9 +1222,9 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageLocation
-      summary: ðŸ“ Send location message
+      summary: 📍 Send location message
       description: Method responsible for sending a fixed location to your contacts,
-        it is mostly used to send an addressâ€™s location
+        it is mostly used to send an address’s location
   /messages/live_location:
     post:
       tags:
@@ -1229,7 +1240,7 @@ paths:
         description: Message live location
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1271,7 +1282,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageLiveLocation
-      summary: ðŸ§­ Send live location message
+      summary: 🧭 Send live location message
   /messages/contact:
     post:
       tags:
@@ -1281,13 +1292,31 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/SenderContact"
+              example:
+                to: "61371989950"
+                name: Name of contact
+                vcard: |-
+                  BEGIN:VCARD
+                  VERSION:3.0
+                  N:Last Name;Example First Name;;;
+                  FN:Example First Name Last Name
+                  ORG:Company Name Department
+                  TITLE:Job Title
+                  NOTE:null
+                  TEL;type=Mobile:+90 850242323
+                  item1.URL:www.youdomain.com
+                  item1.X-ABLabel:OTHER
+                  EMAIL;TYPE=Home:test@yourdomain.com
+                  item2.ADR;type=Home:;;Street Example;Istanbul;;;Turkey
+                  item2.X-ABADR:
+                  END:VCARD
           multipart/form-data:
             schema:
               $ref: "#/components/schemas/SenderContact"
         description: Message contact
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1329,9 +1358,9 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageContact
-      summary: ðŸ‘¤ Send contact message
-      description: Simple and object, this method allows you to send a contact. You
-        don't need to have it added to your contacts list, all you have to do is
+      summary: 👤 Send contact message
+      description: Simple and straightforward, this method allows you to send a
+        contact. You don't need to have it added to your contacts list; simply
         fill in the method attributes with the contact information and send. [A
         few ready
         examples](https://support.whapi.cloud/help-desk/sending/overview-of-other-methods-for-sending/send-contact-vcard)
@@ -1350,7 +1379,7 @@ paths:
         description: Message contact list
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1392,7 +1421,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageContactList
-      summary: ðŸ‘¥ Send contact list message
+      summary: 👥 Send contact list message
       description: Simple and straightforward, this method allows you to send multiple
         contacts. You don't need to have them in your contacts; just fill the
         method's attributes with the contact information and send. [A few ready
@@ -1412,7 +1441,7 @@ paths:
         description: Message poll
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1448,7 +1477,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessagePoll
-      summary: ðŸ“Š Send poll message
+      summary: 📊 Send poll message
       description: In this method, you can send poll-type messages. Often, it's the
         polls that replace [the buttons for interactive
         communication](https://support.whapi.cloud/help-desk/hints/how-to-use-polls-as-buttons)
@@ -1467,7 +1496,7 @@ paths:
         description: Message interactive
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1521,12 +1550,86 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageInteractive
-      summary: ðŸŽ® Send interactive message
+      summary: 🎮 Send interactive message
       description: This endpoint is responsible for sending messages with buttons. The
         section is constantly updated as the functionality of buttons depends on
         WhatsApp updates. Attention! The functionality of sending messages with
         buttons is not stable! For more information, please visit the [Button
         Status
+        topic](https://support.whapi.cloud/help-desk/faq/current-status-of-buttons-on-whatsapp).
+  /messages/carousel:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderCarousel"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderCarousel"
+        description: Message carousel
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: It is forbidden to send to this group/recipient
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Media with specified id not found
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Request media too large
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Unsupported media type
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageCarousel
+      summary: 🖼️ Send carousel message
+      description: Sends interactive carousel messages with media, captions, and
+        buttons (link, call, reply). The carousel messaging feature depends on
+        WhatsApp updates. For more information, please visit the [Buttons Status
         topic](https://support.whapi.cloud/help-desk/faq/current-status-of-buttons-on-whatsapp).
   /messages/sticker:
     post:
@@ -1543,7 +1646,7 @@ paths:
         description: Message sticker
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1597,7 +1700,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageSticker
-      summary: ðŸŽ­ Send media-sticker message
+      summary: 🎭 Send media-sticker message
       description: This method is responsible for sending a sticker message for chats.
         The requirements for [sending all media types are
         identical](https://support.whapi.cloud/help-desk/sending/send-video-audio-image-document)
@@ -1616,7 +1719,7 @@ paths:
         description: Stories post parameters
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1670,7 +1773,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageStory
-      summary: ðŸ‘ï¸â€ðŸ—¨ï¸ Send story message
+      summary: 👁️‍🗨️ Send story message
       description: The method responsible for sending images or texts to your status.
         Remember that statuses disappear after 24 hours. The requirements for
         [sending all media types are
@@ -1690,7 +1793,7 @@ paths:
         description: Stories post parameters for audio
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1744,7 +1847,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageStoryAudio
-      summary: ðŸŽµï¸ Send story audio message
+      summary: 🎵️ Send story audio message
       description: The method responsible for sending audio to your status. Remember
         that statuses disappear after 24 hours. The requirements for [sending
         all media types are
@@ -1764,7 +1867,7 @@ paths:
         description: Media stories post parameters
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1818,7 +1921,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageStoryMedia
-      summary: ðŸ–¼ Send story media message
+      summary: 🖼 Send story media message
       description: The method responsible for sending images or video to your status.
         Remember that statuses disappear after 24 hours. The requirements for
         [sending all media types are
@@ -1836,7 +1939,7 @@ paths:
         description: Text stories post parameters
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1890,7 +1993,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMessageStoryText
-      summary: ðŸ’¬ Send story text message
+      summary: 💬 Send story text message
       description: The method responsible for sending texts to your status. Remember
         that statuses disappear after 24 hours.
   /messages/media/{MediaMessageType}:
@@ -1903,7 +2006,7 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/UploadMedia"
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -1951,24 +2054,25 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: sendMediaMessage
-      summary: ðŸ“Ž Send media message
+      summary: 📎 Send media message
       description: |
         Additional endpoint for easy send media-file as message.
         Use request body as file and inpath parameters for send parameters.
         Media message can be one of the following types:
-        - ðŸ“· image
-        - ðŸŽ¥ video
-        - ðŸŽ¬ gif
-        - ðŸŽµ audio
-        - ðŸŽ¤ voice
-        - ðŸ“„ document
-        - ðŸŽ­ sticker
+        - 📷 image
+        - 🎥 video
+        - 🎬 gif
+        - 🎵 audio
+        - 🎤 voice
+        - 📄 document
+        - 🎭 sticker
   /messages/{MessageID}:
     get:
       tags:
         - Messages
       parameters:
         - $ref: "#/components/parameters/MessageID"
+        - $ref: "#/components/parameters/resync"
       responses:
         "200":
           $ref: "#/components/responses/Message"
@@ -2003,7 +2107,7 @@ paths:
         description: Forward message
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -2039,7 +2143,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: forwardMessage
-      summary: â†ª Forward message
+      summary: ↪ Forward message
       description: Simple and straightforward, in this method, you can forward
         messages through the API by providing the messageId of the message you
         want to forward and the phone number of the chat where this messageId is
@@ -2074,7 +2178,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: markMessageAsRead
-      summary: âœ”âœ” Mark message as read
+      summary: ✔✔ Mark message as read
     delete:
       tags:
         - Messages
@@ -2105,7 +2209,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: deleteMessage
-      summary: âŒ Delete message
+      summary: ❌ Delete message
       description: Method used to delete a text sent in a chat. You will be able to
         delete a message that you sent as well as a message that was sent by a
         contact. To use this resource you will only need the messageId of the
@@ -2154,11 +2258,49 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: reactToMessage
-      summary: ðŸ˜ React to message
+      summary: 😍 React to message
       description: In this method you will be able to react to messages that were sent
-        or recieved by you. You will need to specify the ID of the message you
+        or received by you. You will need to specify the ID of the message you
         will respond to, as well as [the
         emoji](https://support.whapi.cloud/help-desk/sending/send-emoji)
+    delete:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for react to message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified message not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: removeReactFromMessage
+      summary: Remove react from message
+      description: In this method you will be able to remove react from message.
   /messages/{MessageID}/star:
     put:
       tags:
@@ -2197,7 +2339,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: starMessage
-      summary: â­ Star message
+      summary: ⭐ Star message
   /messages/{MessageID}/pin:
     post:
       tags:
@@ -2236,7 +2378,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: pinMessage
-      summary: ðŸ“Œ Pin message
+      summary: 📌 Pin message
     delete:
       tags:
         - Messages
@@ -2351,7 +2493,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: deleteChat
-      summary: âŒ Delete chat
+      summary: ❌ Delete chat
       description: This method is responsible for deleting chats
     post:
       tags:
@@ -2389,7 +2531,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: archiveChat
-      summary: ðŸ—„ Archive/Unarchive chat
+      summary: 🗄 Archive/Unarchive chat
       description: This method is responsible for archiving or unarchiving chats
     patch:
       tags:
@@ -2427,7 +2569,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: patchChat
-      summary: ðŸ“Œ Pin/Unpin chat or ðŸ”‡ Mute/Unmute chat or âœ”âœ” Mark as read/unread chat
+      summary: "⚙️Chat Settings Management: Pin, Mute, Read, Disappearing."
       description: This method is responsible for pinning and unpinning, for muting
         and unmuting your chats. Also this method is responsible for performing
         the action of reading an entire chat or marking a chat as unread
@@ -2468,7 +2610,7 @@ paths:
             schema:
               $ref: "#/components/schemas/CheckContactRequest"
             example:
-              blocking: wait
+              force_check: false
               contacts:
                 - "{{Recipient-WA-ID}}"
         description: Contact data
@@ -2514,6 +2656,46 @@ paths:
         However, an atypical mass check can draw attention to your number, so we
         advise [balancing the check between
         channels](https://support.whapi.cloud/help-desk/faq/checking-if-the-number-has-whatsapp)
+    put:
+      tags:
+        - Contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddContactRequest"
+            example:
+              phone: 61371989950
+              name: Contact
+        description: Add new contact
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Contact"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Channel authorization is required to add a contact
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: The contact already exists
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: addContact
+      summary: Add contact
+      description: Add contact on mobile app and on the channel
   /contacts/{ContactID}:
     get:
       tags:
@@ -2540,7 +2722,7 @@ paths:
       deprecated: false
       operationId: getContact
       summary: Get contact
-      description: This method is responsible for returning all of you contactâ€™s metadata
+      description: This method is responsible for returning all of you contact’s metadata
     post:
       tags:
         - Contacts
@@ -2557,7 +2739,7 @@ paths:
         description: Message contact
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -2570,7 +2752,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for add contact
+          description: Need channel authorization for send contact
         "404":
           content:
             application/json:
@@ -2621,6 +2803,65 @@ paths:
       summary: Check exist
       description: The method individually checks for a number in WhatsApp without
         additional information
+    patch:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditContactRequest"
+            example:
+              name: Contact
+      responses:
+        "200":
+          $ref: "#/components/responses/Contact"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not registered
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: editContact
+      summary: Edit contact
+      description: The method allow to edit contact on mobile app and on the channel
+    delete:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified contact not registered
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deleteContact
+      summary: Delete contact
+      description: The method allow to remove contact on mobile app and on the channel
   /contacts/{ContactID}/profile:
     get:
       tags:
@@ -2661,6 +2902,60 @@ paths:
       summary: Get profile
       description: This method allows you to get profile information (description,
         profile image) by phone number, even if it is not in your contact list
+  /contacts/lids:
+    get:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/ContactIDList"
+      responses:
+        "200":
+          $ref: "#/components/responses/Lids"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getLidByIds
+      summary: Get LIDs by IDs
+      description: Retrieve Linked IDs (LIDs) for specified user IDs
+  /contacts/lids/{ContactID}:
+    get:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Lid"
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: User not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getLidById
+      summary: Get LID by ID
+      description: Retrieve Linked ID (LID) for a single user
   /presences/me:
     put:
       tags:
@@ -2853,7 +3148,7 @@ paths:
         description: Group data
         required: true
       responses:
-        "201":
+        "200":
           content:
             application/json:
               schema:
@@ -2870,7 +3165,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for add group
+          description: Need channel authorization for create group
         "404":
           content:
             application/json:
@@ -3229,7 +3524,7 @@ paths:
         - $ref: "#/components/parameters/GroupID"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          $ref: "#/components/responses/ListParticipants"
         "400":
           content:
             application/json:
@@ -3344,8 +3639,7 @@ paths:
       deprecated: false
       operationId: setGroupIcon
       summary: Set group icon
-      description: This method is reponsibible for changing a group image that already
-        exists
+      description: This method is responsible for changing a group image that already exists
     delete:
       tags:
         - Groups
@@ -3482,7 +3776,7 @@ paths:
         description: Message group invite
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -3611,8 +3905,10 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: approveGroupApplicationsList
-      summary: Accept group applications for listed users
-      description: This method returns the list with result of operation for each user
+      summary: Accept group application for listed user
+      description: This method accepts a single join request (application) for the
+        specified group. To accept multiple applications, you need to call this
+        method in a loop, passing each application ID separately.
     delete:
       tags:
         - Groups
@@ -3640,7 +3936,9 @@ paths:
       deprecated: false
       operationId: rejectGroupApplicationsList
       summary: Reject group applications for listed users
-      description: This method returns the list with result of operation for each user
+      description: This method rejects a single join request (application) for the
+        specified group. To reject multiple applications, you need to call this
+        method in a loop, passing each application ID separately.
   /stories:
     get:
       tags:
@@ -3678,7 +3976,7 @@ paths:
         description: Stories post parameters
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -3743,7 +4041,7 @@ paths:
         description: Text stories post parameters
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -3797,7 +4095,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: createStoryText
-      summary: ðŸ’¬ Post text story
+      summary: 💬 Post text story
       description: The method responsible for sending texts to your status. Remember
         that statuses disappear after 24 hours.
   /stories/send/media:
@@ -3815,7 +4113,7 @@ paths:
         description: Media stories post parameters
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -3869,7 +4167,7 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: createStoryMedia
-      summary: ðŸ–¼ Post media story
+      summary: 🖼 Post media story
       description: The method responsible for sending images or video to your status.
         Remember that statuses disappear after 24 hours. The requirements for
         [sending all media types are
@@ -3889,7 +4187,7 @@ paths:
         description: Stories post parameters for audio
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -3943,11 +4241,69 @@ paths:
           $ref: "#/components/responses/Error"
       deprecated: false
       operationId: createStoryAudio
-      summary: ðŸŽµï¸ Post audio story
+      summary: 🎵️ Post audio story
       description: The method responsible for sending audio to your status. Remember
         that statuses disappear after 24 hours. The requirements for [sending
         all media types are
         identical](https://support.whapi.cloud/help-desk/sending/send-video-audio-image-document)
+  /stories/{MessageID}:
+    get:
+      tags:
+        - Stories
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Message"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified story not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getStory
+      summary: Get story
+    put:
+      tags:
+        - Stories
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CopyStories"
+        description: Stories post parameters
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified story not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: copyStory
+      summary: Copy story
   /statuses/{MessageID}:
     get:
       tags:
@@ -4034,7 +4390,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for add group
+          description: Need channel authorization for create newsletter
         "404":
           content:
             application/json:
@@ -4145,8 +4501,7 @@ paths:
       deprecated: false
       operationId: getNewsletter
       summary: Get newsletter information
-      description: This method returns the metadata of a WhatsApp Channel, including
-        all newsletter information and its views
+      description: This method returns the metadata of a WhatsApp Channel
     delete:
       tags:
         - Newsletters
@@ -4309,7 +4664,9 @@ paths:
       deprecated: false
       operationId: subscribeNewsletterInvite
       summary: Subscribe to newsletter by invite code
-      description: This method is responsible for following a WhatsApp Channel
+      description: This method is responsible for following a WhatsApp Channel. Read
+        more about how to get an [invite
+        code](https://support.whapi.cloud/help-desk/channels/send-channel-newsletter-invite-link).
     delete:
       tags:
         - Newsletters
@@ -4335,7 +4692,9 @@ paths:
       deprecated: false
       operationId: unsubscribeNewsletterInvite
       summary: Unsubscribe from newsletter by invite code
-      description: This method is responsible for unfollowing a WhatsApp Channel
+      description: This method is responsible for unfollowing a WhatsApp Channel. Read
+        more about how to get an [invite
+        code](https://support.whapi.cloud/help-desk/channels/send-channel-newsletter-invite-link).
   /newsletters/{NewsletterID}/tracking:
     post:
       tags:
@@ -4409,7 +4768,7 @@ paths:
               message: <Invite message>
         description: Invite data
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -4559,7 +4918,7 @@ paths:
         description: Newsletter invite link
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -4590,6 +4949,8 @@ paths:
       deprecated: false
       operationId: sendNewsletterInvite
       summary: Send newsletter invite link
+      description: Read more about how to get an [invite
+        code](https://support.whapi.cloud/help-desk/channels/send-channel-newsletter-invite-link).
     get:
       tags:
         - Newsletters
@@ -4627,6 +4988,8 @@ paths:
       deprecated: false
       operationId: getNewsletterByInviteCode
       summary: Get newsletter info by invite code
+      description: Read more about how to get an [invite
+        code](https://support.whapi.cloud/help-desk/channels/send-channel-newsletter-invite-link).
   /media:
     post:
       requestBody:
@@ -4796,6 +5159,31 @@ paths:
       summary: Remove contact from blacklist
       description: Through this method, it is possible to remove the contact on the
         disallowed list (blacklist)
+  /blacklist:
+    get:
+      tags:
+        - Blacklist
+      responses:
+        "200":
+          $ref: "#/components/responses/ContactIDList"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getBlackList
+      summary: Get blacklist
+      description: This method is responsible for getting contacts from the blacklist.
   /business:
     get:
       tags:
@@ -4814,7 +5202,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for getting products
+          description: Need channel authorization for get business profile
         "500":
           $ref: "#/components/responses/Error"
       deprecated: false
@@ -4845,7 +5233,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for getting products
+          description: Need channel authorization for edit business profile
         "429":
           content:
             application/json:
@@ -4917,7 +5305,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for getting products
+          description: Need channel authorization for create product
         "429":
           content:
             application/json:
@@ -5016,7 +5404,7 @@ paths:
         description: Message product
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -5029,7 +5417,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for add contact
+          description: Need channel authorization for send product
         "404":
           content:
             application/json:
@@ -5115,7 +5503,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for update product
+          description: Need channel authorization for delete product
         "404":
           content:
             application/json:
@@ -5149,13 +5537,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for getting products
+          description: Need channel authorization for get order items
         "403":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need order token for getting products
+          description: Need order token for get order items
         "404":
           content:
             application/json:
@@ -5188,7 +5576,7 @@ paths:
         description: Message catalog
         required: true
       responses:
-        "201":
+        "200":
           $ref: "#/components/responses/SentMessage"
         "400":
           content:
@@ -5244,7 +5632,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for creating collection
+          description: Need channel authorization for create collection
         "429":
           content:
             application/json:
@@ -5290,7 +5678,43 @@ paths:
       operationId: getCollectionsList
       summary: Get collections
       description: With this method you will be able to get the collections list from
-        a Whatsapp Business catalog
+        a Whatsapp Business catalog. Products count in collection is 10.
+  /business/collections/products:
+    get:
+      tags:
+        - Business
+      parameters:
+        - $ref: "#/components/parameters/count"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/products_count"
+      responses:
+        "200":
+          $ref: "#/components/responses/BusinessCollectionList"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for getting collection
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: true
+      operationId: getCollectionsProductsList
+      summary: Get collections products
+      description: With this method you will be able to get the products list from a
+        Whatsapp Business catalog
   /business/collections/{CollectionID}:
     get:
       tags:
@@ -5395,6 +5819,40 @@ paths:
       operationId: deleteCollection
       summary: Delete collection
       description: Method to delete business collection
+  /business/collections/{CollectionID}/products:
+    get:
+      tags:
+        - Business
+      parameters:
+        - $ref: "#/components/parameters/CollectionID"
+        - $ref: "#/components/parameters/products_count"
+      responses:
+        "200":
+          $ref: "#/components/responses/Products"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for getting collection
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getCollectionProductList
+      summary: Get collection
+      description: With this method you will be able to get business collection products
   /labels:
     get:
       tags:
@@ -5615,7 +6073,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for add community
+          description: Need channel authorization for create community
         "500":
           $ref: "#/components/responses/Error"
       deprecated: false
@@ -5659,186 +6117,6 @@ paths:
       description: This method is responsible for get a community. [Learn more about
         the nuances of
         community:](https://support.whapi.cloud/help-desk/communities/introduction)
-    delete:
-      tags:
-        - Communities
-      parameters:
-        - $ref: "#/components/parameters/CommunityID"
-      responses:
-        "200":
-          $ref: "#/components/responses/Success"
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Wrong request parameters
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Not permission
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Community not found
-        "500":
-          $ref: "#/components/responses/Error"
-      deprecated: false
-      operationId: deactivateCommunity
-      summary: Deactivate community
-      description: This method is responsible for deactivate community.
-  /communities/{CommunityID}/revokeInviteUrl:
-    delete:
-      tags:
-        - Communities
-      parameters:
-        - $ref: "#/components/parameters/CommunityID"
-      responses:
-        "200":
-          $ref: "#/components/responses/Success"
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Wrong request parameters
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization for delete invite link
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Specified community not found
-        "500":
-          $ref: "#/components/responses/Error"
-      deprecated: false
-      operationId: revokeCommunityInvite
-      summary: Revoke community invite
-  /communities/{CommunityID}/{GroupID}:
-    delete:
-      tags:
-        - Communities
-      parameters:
-        - $ref: "#/components/parameters/CommunityID"
-        - $ref: "#/components/parameters/GroupID"
-      responses:
-        "200":
-          $ref: "#/components/responses/Success"
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Wrong request parameters
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Not permission
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Community not found
-        "500":
-          $ref: "#/components/responses/Error"
-      deprecated: false
-      operationId: unlinkGroupFromCommunity
-      summary: Unlink group from community
-      description: This method is responsible for unlink group from community.
-    put:
-      tags:
-        - Communities
-      parameters:
-        - $ref: "#/components/parameters/CommunityID"
-        - $ref: "#/components/parameters/GroupID"
-      responses:
-        "200":
-          $ref: "#/components/responses/Success"
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Wrong request parameters
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Not permission
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Community not found
-        "500":
-          $ref: "#/components/responses/Error"
-      deprecated: false
-      operationId: linkGroupToCommunity
-      summary: Link group to community
-      description: This method is responsible for link group to community.
-  /communities/{CommunityID}/{GroupID}/join:
-    post:
-      tags:
-        - Communities
-      parameters:
-        - $ref: "#/components/parameters/CommunityID"
-        - $ref: "#/components/parameters/GroupID"
-      responses:
-        "200":
-          $ref: "#/components/responses/Success"
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Wrong request parameters
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-          description: Need channel authorization
-        "500":
-          $ref: "#/components/responses/Error"
-      deprecated: false
-      operationId: joinInCommunityGroup
-      summary: Join in community group
-      description: This method is responsible for join in community group. [Learn more
-        about the nuances of
-        community:](https://support.whapi.cloud/help-desk/communities/introduction)
-  /communities/{CommunityID}/createGroup:
     post:
       tags:
         - Communities
@@ -5879,6 +6157,185 @@ paths:
       summary: Create group in community
       description: This method is responsible for creating a group in community.
         [Learn more about the nuances of
+        community:](https://support.whapi.cloud/help-desk/communities/introduction)
+    delete:
+      tags:
+        - Communities
+      parameters:
+        - $ref: "#/components/parameters/CommunityID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Not permission
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Community not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deactivateCommunity
+      summary: Deactivate community
+      description: This method is responsible for deactivate community.
+  /communities/{CommunityID}/link:
+    delete:
+      tags:
+        - Communities
+      parameters:
+        - $ref: "#/components/parameters/CommunityID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for delete invite link
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified community not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: revokeCommunityInvite
+      summary: Revoke community invite code
+  /communities/{CommunityID}/{GroupID}:
+    put:
+      tags:
+        - Communities
+      parameters:
+        - $ref: "#/components/parameters/CommunityID"
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Not permission
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Community not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: linkGroupToCommunity
+      summary: Link group to community
+      description: This method is responsible for link group to community.
+    delete:
+      tags:
+        - Communities
+      parameters:
+        - $ref: "#/components/parameters/CommunityID"
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Not permission
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Community not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: unlinkGroupFromCommunity
+      summary: Unlink group from community
+      description: This method is responsible for unlink group from community.
+  /communities/{CommunityID}/{GroupID}/join:
+    post:
+      tags:
+        - Communities
+      parameters:
+        - $ref: "#/components/parameters/CommunityID"
+        - $ref: "#/components/parameters/GroupID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: joinInCommunityGroup
+      summary: Join in community group
+      description: This method is responsible for join in community group. [Learn more
+        about the nuances of
         community:](https://support.whapi.cloud/help-desk/communities/introduction)
   /communities/{CommunityID}/settings:
     patch:
@@ -6093,7 +6550,7 @@ paths:
       operationId: demoteCommunityParticipant
       summary: Demote participants to admin in community
       description: This method is responsible for demote participants to admin in community.
-  /communities/{CommunityID}/subGroups:
+  /communities/{CommunityID}/subgroups:
     get:
       tags:
         - Communities
@@ -6128,6 +6585,224 @@ paths:
       description: This method is responsible for get a community subgroups. [Learn
         more about the nuances of
         community:](https://support.whapi.cloud/help-desk/communities/introduction)
+  /communities/event:
+    post:
+      tags:
+        - Communities
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+        description: Event body
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: createEvent
+      summary: Create event
+      description: This method is responsible for creating a event.
+  /communities/{CommunityID}/createGroup:
+    post:
+      tags:
+        - Communities
+      parameters:
+        - $ref: "#/components/parameters/CommunityID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupInCommunityRequest"
+        description: Group data
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Group"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Community not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: true
+      operationId: createGroupInCommunityDeprecated
+      summary: Create group in community
+      description: This method is responsible for creating a group in community.
+        [Learn more about the nuances of
+        community:](https://support.whapi.cloud/help-desk/communities/introduction)
+  /calls:
+    post:
+      tags:
+        - Calls
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCallEventRequest"
+        description: Call data
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/CreateCallEventResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for create call event
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: createCallEvent
+      summary: Create call event
+      description: This method is responsible for creating a call event.
+  /calls/{CallID}:
+    delete:
+      tags:
+        - Calls
+      parameters:
+        - $ref: "#/components/parameters/CallID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectCallRequest"
+        description: Reject call data
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization to reject a call
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Call not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: rejectCall
+      summary: Reject call
+      description: This method is responsible for rejecting a call.
+  /calls/{CallID}/reject:
+    post:
+      tags:
+        - Calls
+      parameters:
+        - $ref: "#/components/parameters/CallID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectCallRequest"
+        description: Reject call data
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization to reject a call
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Call not found
+        "500":
+          $ref: "#/components/responses/Error"
+      operationId: rejectCallDeprecated
+      deprecated: true
+      summary: Reject call
+      description: This method is responsible for rejecting a call.
+  /calls/group_link:
+    post:
+      tags:
+        - Calls
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupCallLinkRequest"
+        description: Call link options
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/CreateGroupCallLinkResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for create call link
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: createGroupCallLink
+      summary: Create group video call link
+      description: This method creates a link for starting a group video call.
 components:
   parameters:
     wakeup:
@@ -6289,6 +6964,13 @@ components:
         $ref: "#/components/schemas/MessageID"
       in: path
       required: true
+    resync:
+      name: resync
+      description: If set to true, the channel will resync its data.
+      schema:
+        type: boolean
+        default: false
+      in: query
     ContactID:
       name: ContactID
       style: simple
@@ -6297,6 +6979,17 @@ components:
       schema:
         $ref: "#/components/schemas/ContactID"
       in: path
+      required: true
+    ContactIDList:
+      name: ContactIDList
+      in: query
+      style: form
+      explode: false
+      description: Comma separated list of contact IDs
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/ContactID"
       required: true
     EntryID:
       name: EntryID
@@ -6434,6 +7127,15 @@ components:
         type: string
       in: query
       allowReserved: true
+    products_count:
+      name: products_count
+      description: Count of products in collection to return
+      schema:
+        type: number
+        minimum: 1
+        maximum: 30
+        default: 10
+      in: query
     CollectionID:
       name: CollectionID
       style: simple
@@ -6458,9 +7160,7 @@ components:
       explode: false
       description: Chat ID or Message ID for label association
       schema:
-        oneOf:
-          - $ref: "#/components/schemas/MessageID"
-          - $ref: "#/components/schemas/ChatID"
+        $ref: "#/components/schemas/ChatID"
       in: path
       required: true
     CommunityID:
@@ -6470,6 +7170,15 @@ components:
       description: Community ID
       schema:
         $ref: "#/components/schemas/GroupID"
+      in: path
+      required: true
+    CallID:
+      name: CallID
+      style: simple
+      explode: false
+      description: Call ID
+      schema:
+        $ref: "#/components/schemas/CallID"
       in: path
       required: true
   requestBodies:
@@ -6501,6 +7210,7 @@ components:
             on_call_pager: <WA_ID of valid WhatsApp contact>
             pass_through: false
             sent_status: false
+            proxy: socks5://login:password@167.160.89.124:10030
     WebhookTest:
       description: Options for webhook test
       content:
@@ -6572,6 +7282,9 @@ components:
               Media file to upload.
             type: object
             properties:
+              no_encode:
+                description: Do not use our encoding
+                type: boolean
               media:
                 anyOf:
                   - $ref: "#/components/schemas/MediaWithUploadFromFile"
@@ -6674,12 +7387,6 @@ components:
           schema:
             $ref: "#/components/schemas/AuthCode"
       description: OK
-    MobileLogin:
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/MobileLoginStatus"
-      description: OK
     UserProfile:
       content:
         application/json:
@@ -6732,6 +7439,18 @@ components:
           schema:
             $ref: "#/components/schemas/Contact"
       description: OK
+    Lids:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Lids"
+      description: Map of user LIDs
+    Lid:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Lid"
+      description: User LID information
     Presence:
       content:
         application/json:
@@ -6883,6 +7602,12 @@ components:
             format: binary
             type: string
       description: OK
+    ContactIDList:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ContactIDList"
+      description: OK
     BusinessProfile:
       content:
         application/json:
@@ -6960,6 +7685,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/CommunitySubGroups"
+      description: OK
+    CreateCallEventResponse:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateCallEventResponse"
+      description: Internal Error
+    CreateGroupCallLinkResponse:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateGroupCallLinkResponse"
       description: OK
   schemas:
     ResponseError:
@@ -7098,44 +7835,31 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Event"
-    RequestMobileLogin:
-      title: Request Mobile Login
-      description: Request a login code to be sent to the user's phone number. The
-        code is valid for 5 minutes.
-      type: object
-      required:
-        - phone_number
-      properties:
-        phone_number:
-          $ref: "#/components/schemas/ContactID"
-          description: The phone number to send the code (WA Contact ID)
-        method:
-          $ref: "#/components/schemas/MobileLoginMethod"
-        captcha_code:
-          type: string
-          description: The captcha code
-          example: 123456
-        code:
-          type: string
-          description: The auth code
-          example: 123456
     UserProfileUpdate:
       title: UserProfile request body
       type: object
       properties:
         name:
           type: string
-          description: New user name.
+          description: Update user name.
           minLength: 3
           maxLength: 25
         about:
           type: string
-          description: New user info in About section.
+          description: Update user info in About section.
           minLength: 1
           maxLength: 139
         icon:
           type: string
-          description: New user icon in base64/url.
+          description: Update user icon in base64/url.
+    ChangeStatusRequest:
+      title: Change status request
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
     SenderText:
       title: Message text send parameters
       type: object
@@ -7155,8 +7879,10 @@ components:
             no_link_preview:
               type: boolean
               description: Set "true" if necessary to send the link without preview
+            wide_link_preview:
+              type: boolean
+              description: Set "true" to try to send the fullwidth link preview
         - $ref: "#/components/schemas/Mentions"
-        - $ref: "#/components/schemas/ViewOnce"
     SenderImage:
       title: Message image send parameters
       type: object
@@ -7226,7 +7952,6 @@ components:
               pattern: ^#[0-9a-fA-F]{6,8}$
               example: "#FF000000"
               default: "#00000000"
-        - $ref: "#/components/schemas/ViewOnce"
     SenderVoice:
       title: Message voice send parameters
       type: object
@@ -7238,7 +7963,6 @@ components:
         - $ref: "#/components/schemas/SendMedia"
         - $ref: "#/components/schemas/MessagePropsAudio"
         - $ref: "#/components/schemas/MessagePropsVoice"
-        - $ref: "#/components/schemas/ViewOnce"
     SenderDocument:
       title: Message document send parameters
       type: object
@@ -7249,7 +7973,6 @@ components:
         - $ref: "#/components/schemas/Sender"
         - $ref: "#/components/schemas/SendMedia"
         - $ref: "#/components/schemas/MessagePropsDocument"
-        - $ref: "#/components/schemas/ViewOnce"
     SenderLinkPreview:
       title: Message link preview send parameters
       type: object
@@ -7263,7 +7986,6 @@ components:
         - $ref: "#/components/schemas/MessagePropsLinkPreview"
         - $ref: "#/components/schemas/SendMedia"
         - $ref: "#/components/schemas/Mentions"
-        - $ref: "#/components/schemas/ViewOnce"
     SenderLocation:
       title: Message location send parameters
       type: object
@@ -7312,7 +8034,6 @@ components:
       allOf:
         - $ref: "#/components/schemas/Sender"
         - $ref: "#/components/schemas/MessagePropsPoll"
-        - $ref: "#/components/schemas/ViewOnce"
     SenderInteractive:
       title: Message interactive send parameters
       type: object
@@ -7321,7 +8042,16 @@ components:
       allOf:
         - $ref: "#/components/schemas/Sender"
         - $ref: "#/components/schemas/MessagePropsInteractive"
-        - $ref: "#/components/schemas/ViewOnce"
+        - $ref: "#/components/schemas/SendMedia"
+        - $ref: "#/components/schemas/MessagePropsImageOrVideo"
+    SenderCarousel:
+      title: Message carousel send parameters
+      type: object
+      required:
+        - to
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessagePropsCarousel"
     SenderSticker:
       title: Message sticker send parameters
       type: object
@@ -7346,6 +8076,11 @@ components:
             contacts:
               type: array
               description: List of contacts to send the story to
+              items:
+                $ref: "#/components/schemas/ContactID"
+            exclude_contacts:
+              type: array
+              description: List of contacts to exclude
               items:
                 $ref: "#/components/schemas/ContactID"
             background_color:
@@ -7387,6 +8122,11 @@ components:
               description: List of contacts to send the story to
               items:
                 $ref: "#/components/schemas/ContactID"
+            exclude_contacts:
+              type: array
+              description: List of contacts to exclude
+              items:
+                $ref: "#/components/schemas/ContactID"
             background_color:
               type: string
               description: Background color of the story (ARGB)
@@ -7407,6 +8147,11 @@ components:
               description: List of contacts to send the story to
               items:
                 $ref: "#/components/schemas/ContactID"
+            exclude_contacts:
+              type: array
+              description: List of contacts to exclude
+              items:
+                $ref: "#/components/schemas/ContactID"
     SenderStoriesText:
       title: Stories post parameters
       type: object
@@ -7416,6 +8161,11 @@ components:
         contacts:
           type: array
           description: List of contacts to send the story to
+          items:
+            $ref: "#/components/schemas/ContactID"
+        exclude_contacts:
+          type: array
+          description: List of contacts to exclude
           items:
             $ref: "#/components/schemas/ContactID"
         caption:
@@ -7461,11 +8211,10 @@ components:
     ReactToMessage:
       title: React to message
       type: object
-      required:
-        - emoji
       properties:
         emoji:
           $ref: "#/components/schemas/Emoji"
+      description: Leave blank to remove the reaction.
     Star:
       title: Starred Messages
       type: object
@@ -7504,8 +8253,9 @@ components:
           example: true
         mute_until:
           type: integer
-          description: Mute chat until. 0 - unmute chat
-          example: 0
+          description: Time until which the chat should remain muted, in UNIX timestamp
+            format (in milliseconds). Use 0 to unmute the chat
+          example: 1810364624000
         mark_unread:
           type: boolean
           description: Mark as unread/read chat
@@ -7526,14 +8276,6 @@ components:
         - contacts
       type: object
       properties:
-        blocking:
-          description: Blocking determines whether the request should wait for the
-            processing to complete (synchronous) or not (asynchronous).
-          default: no_wait
-          enum:
-            - no_wait
-            - wait
-          type: string
         contacts:
           description: Array of contact phone numbers. The numbers can be in any standard
             telephone number format.
@@ -7556,6 +8298,17 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/CheckContact"
+    AddContactRequest:
+      title: Add contact request
+      type: object
+      properties:
+        phone:
+          $ref: "#/components/schemas/ContactID"
+        name:
+          type: string
+      required:
+        - phone
+        - name
     SenderContactFromPhonebook:
       title: Message contact from phonebook send parameters
       type: object
@@ -7567,6 +8320,14 @@ components:
             name:
               description: Name of contact
               type: string
+    EditContactRequest:
+      title: Edit contact request
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
     SendMePresenceRequest:
       title: Send me presence request
       required:
@@ -7654,7 +8415,7 @@ components:
               $ref: "#/components/schemas/ContactID"
             unprocessed_participants:
               type: array
-              description: Ð¡ontacts that could not be added to the group
+              description: Сontacts that could not be added to the group
               items:
                 $ref: "#/components/schemas/ContactID"
     GroupInvite:
@@ -7744,7 +8505,20 @@ components:
                 (preview_type=thumbnail). In JPEG format
         - $ref: "#/components/schemas/SendMedia"
         - $ref: "#/components/schemas/Mentions"
-        - $ref: "#/components/schemas/ViewOnce"
+    CopyStories:
+      title: Stories copy parameters
+      type: object
+      properties:
+        contacts:
+          type: array
+          description: List of contacts to send the story to
+          items:
+            $ref: "#/components/schemas/ContactID"
+        exclude_contacts:
+          type: array
+          description: List of contacts to exclude
+          items:
+            $ref: "#/components/schemas/ContactID"
     CreateNewsletterRequest:
       title: Create newsletter request
       type: object
@@ -7892,7 +8666,6 @@ components:
                 preview (preview_type=thumbnail). In JPEG format
         - $ref: "#/components/schemas/SendMedia"
         - $ref: "#/components/schemas/Mentions"
-        - $ref: "#/components/schemas/ViewOnce"
     UploadMediaResponse:
       title: Upload media response
       description: ""
@@ -7977,8 +8750,10 @@ components:
           description: Product images urls
           type: array
           items:
-            type: string
-            format: uri
+            anyOf:
+              - $ref: "#/components/schemas/MediaWithUploadFromUrl"
+              - $ref: "#/components/schemas/MediaWithUploadFromBase64"
+              - $ref: "#/components/schemas/MediaWithoutUpload"
           minItems: 1
           maxItems: 10
         availability:
@@ -8052,7 +8827,6 @@ components:
                 (preview_type=thumbnail). In JPEG format
         - $ref: "#/components/schemas/SendMedia"
         - $ref: "#/components/schemas/Mentions"
-        - $ref: "#/components/schemas/ViewOnce"
     BusinessCollectionCreate:
       title: Business Collection
       type: object
@@ -8155,6 +8929,7 @@ components:
           type: string
           enum:
             - modify_groups
+            - member_add_mode
         policy:
           type: string
           enum:
@@ -8163,10 +8938,71 @@ components:
       required:
         - setting
         - policy
-    MessageID:
-      type: string
-      description: Message ID
-      pattern: ^[A-Za-z0-9._]{4,23}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{4,10})?$
+    CreateEventRequest:
+      title: Event message send parameters
+      type: object
+      required:
+        - to
+        - title
+        - startTime
+      allOf:
+        - properties:
+            to:
+              type: string
+              description: Use [Get communities](https://gate.whapi.cloud/communities) to get
+                the community ID.
+              pattern: ^[\d-]{10,31}(@[\w\.]{1,})?$
+              example: 1234567891@g.us
+            title:
+              type: string
+              description: Event name.
+            description:
+              type: string
+              description: Event description.
+            startTime:
+              type: number
+              description: Start time (format timestamp)
+            endTime:
+              type: number
+              description: End time (format timestamp)
+            degreesLatitude:
+              type: number
+              format: double
+            degreesLongitude:
+              type: number
+              format: double
+            locationName:
+              type: string
+            locationAddress:
+              type: string
+        - $ref: "#/components/schemas/ViewOnce"
+    CreateCallEventRequest:
+      title: Create call event request body
+      type: object
+      properties:
+        start_time:
+          type: string
+          description: Start time of the call in UNIX timestamp format (in seconds)
+          example: 1810202551
+      required:
+        - start_time
+    RejectCallRequest:
+      title: RejectCallRequest
+      type: object
+      properties:
+        callFrom:
+          $ref: "#/components/schemas/ContactID"
+      required:
+        - callFrom
+    CreateGroupCallLinkRequest:
+      title: Create group call link request
+      type: object
+      properties:
+        start_time:
+          type: string
+          description: Optional start time of the call in UNIX timestamp seconds
+      required:
+        - start_time
     ChatID:
       type: string
       description: Chat ID
@@ -8175,6 +9011,9 @@ components:
       type: string
       description: Contact ID
       pattern: ^([\d]{7,15})?$
+    CallID:
+      type: string
+      description: Call ID
     CollectionID:
       type: string
       description: CollectionID
@@ -8185,7 +9024,7 @@ components:
     InviteCode:
       type: string
       description: Invite code
-      pattern: ^[A-Za-z0-9]{22}$
+      pattern: ^[A-Za-z0-9]{14,22}$
     LabelID:
       type: string
       description: Label ID
@@ -8205,6 +9044,10 @@ components:
         - voice
         - document
         - sticker
+    MessageID:
+      type: string
+      description: Message ID
+      pattern: ^[A-Za-z0-9._]{4,30}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{2,10})?$
     NewsletterID:
       type: string
       description: Newsletter ID
@@ -8283,8 +9126,10 @@ components:
             from WhatsApp. This can help maintain anonymity and ensure smooth
             operation.
           type: string
+          pattern: ^socks5h?:\/\/([!-\/:-@[-`{-~a-zA-Z0-9_-]+):([a-zA-Z0-9_-]+)@(((?:[0-9]{1,3}\.){3}[0-9]{1,3})|[a-zA-Z0-9.]+):([0-9]{1,5})$|^$
         mobile_proxy:
-          description: Service proxy for mobile authorization.
+          description: Service proxy for mobile authorization. Beta-only parameter;
+            ignored in the production version.
           type: string
         offline_mode:
           description: When true, API will not send online status to the server on
@@ -8474,7 +9319,7 @@ components:
         - type
         - name
         - participants
-        - size
+        - participants_count
       allOf:
         - $ref: "#/components/schemas/Chat"
         - properties:
@@ -8502,9 +9347,9 @@ components:
               type: string
               description: Group description ID
               example: Group description ID
-            size:
+            participants_count:
               type: integer
-              description: Group size
+              description: Number of participants in the group
               example: 2
             participants:
               type: array
@@ -8541,6 +9386,9 @@ components:
               type: boolean
               description: If only admins can send messages
               example: false
+            adminAddMemberMode:
+              type: boolean
+              description: If only admins can add members
             ephemeral:
               type: number
               description: Group ephemeral timer
@@ -8625,9 +9473,17 @@ components:
         status:
           type: string
           description: Contact status
+        saved:
+          type: boolean
+          description: If true - the contact is saved in the contact list
       required:
         - id
         - name
+    ContactIDList:
+      title: Contacts
+      type: array
+      items:
+        $ref: "#/components/schemas/ContactID"
     ContactsList:
       title: List of contacts
       type: object
@@ -8637,6 +9493,22 @@ components:
             contacts:
               $ref: "#/components/schemas/Contacts"
         - $ref: "#/components/schemas/Iterator"
+    CreateCallEventResponse:
+      title: Create call event response body
+      type: object
+      properties:
+        call_url:
+          type: string
+      required:
+        - call_url
+    CreateGroupCallLinkResponse:
+      title: Create group call link response
+      type: object
+      properties:
+        link:
+          type: string
+      required:
+        - link
     GroupApplicationList:
       title: List of join requests
       type: object
@@ -8689,6 +9561,9 @@ components:
       description: The health object contains information about the uptime of the
         channel and the status of the channel. Sent on event "channels.post"
       properties:
+        channel_id:
+          type: string
+          description: Active channel ID
         start_at:
           type: number
           description: Date timestamp when channel started on the server.
@@ -8698,6 +9573,12 @@ components:
         version:
           type: string
           description: Channel version
+        core_version:
+          type: string
+          description: Core version
+        api_version:
+          type: string
+          description: Api version
         device_id:
           type: number
           description: Current device ID
@@ -8730,6 +9611,21 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Label"
+    Lid:
+      title: Lid
+      type: object
+      properties:
+        lid:
+          description: WhatsApp LID
+          type: string
+      required:
+        - lid
+    Lids:
+      title: Lids
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/Lid"
+      description: Mapping from user id to lid data
     Limits:
       title: Trial limits
       type: object
@@ -8906,64 +9802,6 @@ components:
           type: integer
           format: int32
           description: The index of the last message
-    MobileLoginStatus:
-      title: Mobile Login status
-      description: ""
-      type: object
-      required:
-        - phone_number
-        - method
-      properties:
-        phone_number:
-          type: object
-          description: Parsed phone number
-          properties:
-            country:
-              type: string
-              description: Country of the phone number
-              example: TR
-            e164_format:
-              type: string
-              description: Phone number in E164 format
-              example: 901234567890
-            international_format:
-              type: string
-              description: Phone number in international format
-              example: +90 123 456 78 90
-            national_format:
-              type: string
-              description: Phone number in national format
-              example: 0123 456 78 90
-            country_code:
-              type: string
-              description: Country code
-              example: 90
-            national_number:
-              type: string
-              description: Phone number
-              example: 1234567890
-            mcc:
-              type: string
-              description: Mobile Country Code
-              example: 286
-        method:
-          $ref: "#/components/schemas/MobileLoginMethod"
-        captcha:
-          type: string
-          description: Captcha code in base64
-        status:
-          type: string
-          description: Login status
-          example: sent
-          enum:
-            - waiting_code
-            - error
-            - captcha_required
-            - completed
-        error:
-          type: string
-          description: Error message
-          example: Error message
     NewslettersList:
       title: List of newsletters
       type: object
@@ -9267,6 +10105,13 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Contact"
+    ViewOnce:
+      title: View once
+      type: object
+      properties:
+        view_once:
+          type: boolean
+          description: Is view once
     Participants:
       title: Participants list
       type: object
@@ -9415,6 +10260,7 @@ components:
         - buttons
         - list
         - pin
+        - carousel
     MessageSource:
       default: text
       type: string
@@ -9642,7 +10488,6 @@ components:
       type: object
       allOf:
         - $ref: "#/components/schemas/VCard"
-        - $ref: "#/components/schemas/ViewOnce"
     MessageContentContacts:
       title: Content contacts message
       type: object
@@ -9652,7 +10497,6 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/VCard"
-        - $ref: "#/components/schemas/ViewOnce"
     MessageContentInteractive:
       title: Message content interactive
       type: object
@@ -9815,6 +10659,8 @@ components:
             - vote
             - comment
             - event_response
+            - pin
+            - unpin
         emoji:
           description: Action emoji for reaction
           type: string
@@ -10067,13 +10913,9 @@ components:
               description: Time in seconds to simulate recording voice
               default: 0
               minimum: 0
-    ViewOnce:
-      title: View once
-      type: object
-      properties:
-        view_once:
-          type: boolean
-          description: Is view once
+            waveform:
+              type: string
+              description: Voice message waveform
     VCard:
       title: VCard
       type: object
@@ -10597,14 +11439,6 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Message"
-    MobileLoginMethod:
-      title: Mobile Login method
-      type: string
-      description: The method to receive the one time code (sms or voice)
-      enum:
-        - voice
-        - sms
-      default: sms
     Newsletters:
       title: Newsletters
       type: array
@@ -10692,23 +11526,16 @@ components:
             of the contact/group/channel to which you want to send the message.
             Use [Get groups](https://whapi.readme.io/reference/getgroups) to get
             the group ID.
-          pattern: ^[\d-]{10,31}(@[\w\.]{1,})?$
+          pattern: ^[\d-]{9,31}(@[\w\.]{1,})?$
           example: 1234567891@s.whatsapp.net
         quoted:
           type: string
           description: Message ID of the message to be quoted
-          pattern: ^[A-Za-z0-9._]{4,23}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{4,10})?$
-        ephemeral:
-          type: integer
-          description: Time in seconds for the message to be deleted. The Disappearing
-            messages setting should be enabled in the chat where you are sending
-            this message.
-          minimum: 1
-          maximum: 604800
+          pattern: ^[A-Za-z0-9._]{4,30}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{2,10})?$
         edit:
           type: string
           description: Message ID of the message to be edited
-          pattern: ^[A-Za-z0-9._]{4,23}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{4,10})?$
+          pattern: ^[A-Za-z0-9._]{4,30}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{2,10})?$
     SendMedia:
       title: Message media file parameters for send
       description: >
@@ -10735,6 +11562,24 @@ components:
         no_cache:
           description: Do not use the cache in a request
           type: boolean
+    MessagePropsCarousel:
+      title: Message carousel unique parameters
+      type: object
+      properties:
+        body:
+          type: object
+          description: Body of carousel
+          properties:
+            text:
+              type: string
+              description: Text of body
+        cards:
+          type: array
+          description: Cards of carousel
+          items:
+            $ref: "#/components/schemas/CarouselCard"
+      required:
+        - cards
     Mentions:
       title: Mentions
       type: object
@@ -10743,7 +11588,7 @@ components:
           type: array
           items:
             type: string
-            pattern: ^\d{7,15}(@s\.whatsapp\.net)?$
+            pattern: ^\d{7,15}(@s\.whatsapp\.net)?$|^\d{10,31}@g\.us$
           description: The numbers of the mentioned users
     MessagePropsGif:
       title: Message gif unique parameters
@@ -11113,6 +11958,7 @@ components:
               type: string
           required:
             - sections
+            - label
     ButtonList:
       title: List of buttons
       type: object
@@ -11132,6 +11978,27 @@ components:
         product_id:
           description: Product ID
           type: string
+    CarouselCard:
+      title: Carousel card
+      type: object
+      properties:
+        text:
+          description: Card text
+          type: string
+        id:
+          description: Card ID
+          type: string
+        buttons:
+          type: array
+          description: Buttons of card
+          items:
+            $ref: "#/components/schemas/Button"
+        media:
+          $ref: "#/components/schemas/SendMedia"
+      required:
+        - buttons
+        - media
+        - id
   securitySchemes:
     bearerAuth:
       scheme: bearer

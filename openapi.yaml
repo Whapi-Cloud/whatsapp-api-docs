@@ -189,11 +189,11 @@ paths:
         - Users
       parameters:
         - $ref: "#/components/parameters/wakeup"
-        - $ref: "#/components/parameters/Size"
-        - $ref: "#/components/parameters/Width"
-        - $ref: "#/components/parameters/Height"
-        - $ref: "#/components/parameters/ColorLight"
-        - $ref: "#/components/parameters/ColorDark"
+        - $ref: "#/components/parameters/size"
+        - $ref: "#/components/parameters/width"
+        - $ref: "#/components/parameters/height"
+        - $ref: "#/components/parameters/color_light"
+        - $ref: "#/components/parameters/color_dark"
       responses:
         "200":
           $ref: "#/components/responses/UserLogin"
@@ -233,11 +233,11 @@ paths:
         - Users
       parameters:
         - $ref: "#/components/parameters/wakeup"
-        - $ref: "#/components/parameters/Size"
-        - $ref: "#/components/parameters/Width"
-        - $ref: "#/components/parameters/Height"
-        - $ref: "#/components/parameters/ColorLight"
-        - $ref: "#/components/parameters/ColorDark"
+        - $ref: "#/components/parameters/size"
+        - $ref: "#/components/parameters/width"
+        - $ref: "#/components/parameters/height"
+        - $ref: "#/components/parameters/color_light"
+        - $ref: "#/components/parameters/color_dark"
       responses:
         "200":
           $ref: "#/components/responses/Image"
@@ -277,6 +277,117 @@ paths:
       deprecated: false
       operationId: loginUserRowData
       summary: Login user with QR-rowdata
+  /users/login/passkey/nid:
+    post:
+      tags:
+        - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPasskeyRequest"
+        description: Request body for automatic NID passkey login completion
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Invalid passkey request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Passkey request not found or expired
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Channel already authenticated
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: loginUserPasskeyNid
+      summary: Complete login with automatic NID passkey
+  /users/login/passkey/chrome:
+    post:
+      tags:
+        - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPasskeyRequest"
+        description: Request body for Chrome passkey login completion
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Invalid passkey request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Passkey request not found or expired
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Channel already authenticated
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: loginUserPasskeyChrome
+      summary: Complete login with Chrome passkey
+  /users/login/passkey/paste:
+    post:
+      tags:
+        - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPasskeyPasteRequest"
+        description: Request body for pasted WebAuthn response login completion
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Invalid passkey response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Passkey request not found or expired
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Channel already authenticated
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: loginUserPasskeyPaste
+      summary: Complete login with pasted passkey response
   /users/login/{PhoneNumber}:
     get:
       tags:
@@ -376,6 +487,26 @@ paths:
       summary: Update user info
       description: This method is responsible for changing the details of your
         WhatsApp profile
+  /users/account/registration_date:
+    get:
+      tags:
+        - Users
+      responses:
+        "200":
+          $ref: "#/components/responses/AccountRegistrationDate"
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getAccountRegistrationDate
+      summary: Get account registration date
+      description: Retrieve account creation and last registration timestamps for the
+        current WhatsApp account
   /status:
     put:
       tags:
@@ -404,7 +535,7 @@ paths:
           description: Need channel authorization
         "500":
           $ref: "#/components/responses/Error"
-      deprecated: false
+      deprecated: true
       operationId: changeStatus
       summary: Change status text
       description: Updates the "About" text of the account
@@ -1481,6 +1612,112 @@ paths:
       description: In this method, you can send poll-type messages. Often, it's the
         polls that replace [the buttons for interactive
         communication](https://support.whapi.cloud/help-desk/hints/how-to-use-polls-as-buttons)
+  /messages/quiz:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderQuiz"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderQuiz"
+        description: Message quiz
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: It is forbidden to send to this group/recipient
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageQuiz
+      summary: Send quiz message
+      description: Send a quiz message to a WhatsApp Channel.
+  /messages/question:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderQuestion"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SenderQuestion"
+        description: Message question
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: It is forbidden to send to this group/recipient
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: sendMessageQuestion
+      summary: Send question message
+      description: Send a question message to a WhatsApp Channel.
   /messages/interactive:
     post:
       tags:
@@ -2410,6 +2647,104 @@ paths:
       deprecated: false
       operationId: unpinMessage
       summary: Unpin message
+  /messages/{MessageID}/comment:
+    post:
+      tags:
+        - Messages
+      parameters:
+        - $ref: "#/components/parameters/MessageID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentToMessage"
+        description: Comment on a community announcement message
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SentMessage"
+          description: Comment sent
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for comment on message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified message not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: commentMessage
+      summary: Comment on community announcement
+      description: Send a text comment to a community announcement message.
+  /messages/event:
+    post:
+      tags:
+        - Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderEvent"
+        description: Event body
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/SentMessage"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for send message
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: It is forbidden to send to this group/recipient
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
+      deprecated: false
+      operationId: sendEvent
+      summary: Send event
+      description: This method is responsible for sending a event.
   /chats:
     get:
       tags:
@@ -2610,7 +2945,7 @@ paths:
             schema:
               $ref: "#/components/schemas/CheckContactRequest"
             example:
-              force_check: false
+              blocking: wait
               contacts:
                 - "{{Recipient-WA-ID}}"
         description: Contact data
@@ -2902,6 +3237,51 @@ paths:
       summary: Get profile
       description: This method allows you to get profile information (description,
         profile image) by phone number, even if it is not in your contact list
+  /contacts/{ContactID}/about:
+    get:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/ContactID"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactAbout"
+              example:
+                about: Hey there! I am using WhatsApp.
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for getting user info
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Trial version limit exceeded
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified user not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getContactAbout
+      summary: Get contact about
+      description: получить About-текст WhatsApp-профиля по номеру/ContactID.
   /contacts/lids:
     get:
       tags:
@@ -2956,6 +3336,33 @@ paths:
       operationId: getLidById
       summary: Get LID by ID
       description: Retrieve Linked ID (LID) for a single user
+  /contacts/ids/{ContactLID}:
+    get:
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/ContactLID"
+      responses:
+        "200":
+          $ref: "#/components/responses/ContactID"
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: User not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getIdByLid
+      summary: Get ID by LID
+      description: Retrieve ID for a single user
   /presences/me:
     put:
       tags:
@@ -3238,6 +3645,7 @@ paths:
         - Groups
       parameters:
         - $ref: "#/components/parameters/GroupID"
+        - $ref: "#/components/parameters/resync"
       responses:
         "200":
           $ref: "#/components/responses/Group"
@@ -3424,6 +3832,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
           description: Specified group not found
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Too many requests
         "500":
           $ref: "#/components/responses/Error"
       deprecated: false
@@ -4480,7 +4894,7 @@ paths:
         - Newsletters
       parameters:
         - $ref: "#/components/parameters/NewsletterID"
-        - $ref: "#/components/parameters/role"
+        - $ref: "#/components/parameters/user_role"
       responses:
         "200":
           $ref: "#/components/responses/Messages"
@@ -4752,6 +5166,40 @@ paths:
       operationId: getMessagesNewsletter
       summary: Get newsletter messages
       description: The method returns the history of WhatsApp Channel messages
+  /newsletters/{NewsletterID}/messages/{MessageID}/paid_partnership:
+    post:
+      tags:
+        - Newsletters
+      parameters:
+        - $ref: "#/components/parameters/NewsletterID"
+        - $ref: "#/components/parameters/MessageID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for this action
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified newsletter message not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: addNewsletterMessagePaidPartnership
+      summary: Label newsletter message as paid partnership
+      description: Adds a paid partnership label to a WhatsApp Channel message
   /newsletters/{NewsletterID}/invite/{ContactID}:
     post:
       tags:
@@ -5103,12 +5551,12 @@ paths:
       operationId: deleteMedia
       summary: Delete media
       description: Delete a file from the cloud by ID
-  /blacklist/{ContactID}:
+  /blacklist/{ContactIdOrLid}:
     put:
       tags:
         - Blacklist
       parameters:
-        - $ref: "#/components/parameters/ContactID"
+        - $ref: "#/components/parameters/ContactIdOrLid"
       responses:
         "200":
           $ref: "#/components/responses/Success"
@@ -5136,7 +5584,7 @@ paths:
       tags:
         - Blacklist
       parameters:
-        - $ref: "#/components/parameters/ContactID"
+        - $ref: "#/components/parameters/ContactIdOrLid"
       responses:
         "200":
           $ref: "#/components/responses/Success"
@@ -5853,6 +6301,45 @@ paths:
       operationId: getCollectionProductList
       summary: Get collection
       description: With this method you will be able to get business collection products
+  /business/limits/reachout_timelock:
+    get:
+      tags:
+        - Business
+      responses:
+        "200":
+          $ref: "#/components/responses/ReachoutTimelock"
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getReachoutTimelock
+      summary: Get reachout timelock status
+      description: Returns whether the current account is temporarily limited from
+        starting chats.
+  /business/limits/new_chat:
+    get:
+      tags:
+        - Business
+      responses:
+        "200":
+          $ref: "#/components/responses/NewChatLimit"
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: getNewChatLimit
+      summary: Get new chat limit
+      description: Returns the current account limit for starting new individual chats.
   /labels:
     get:
       tags:
@@ -5923,6 +6410,76 @@ paths:
       deprecated: false
       operationId: getLabelAssociations
       summary: Get objects associated with label
+    patch:
+      tags:
+        - Labels
+      parameters:
+        - $ref: "#/components/parameters/LabelID"
+      requestBody:
+        description: Rename label request body
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenameLabel"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for rename label
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified label not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: renameLabel
+      summary: Rename label
+      description: Rename label in WhatsApp Business
+    delete:
+      tags:
+        - Labels
+      parameters:
+        - $ref: "#/components/parameters/LabelID"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Wrong request parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Need channel authorization for delete label
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+          description: Specified label not found
+        "500":
+          $ref: "#/components/responses/Error"
+      deprecated: false
+      operationId: deleteLabel
+      summary: Delete label
+      description: Delete label in WhatsApp Business
   /labels/{LabelID}/{AssociationID}:
     post:
       tags:
@@ -6831,32 +7388,32 @@ components:
           - mobile
         default: web
       in: query
-    Size:
+    size:
       name: size
       description: Size of QR-code
       schema:
         type: number
       in: query
-    Width:
+    width:
       name: width
       description: Width of result image
       schema:
         type: number
       in: query
-    Height:
+    height:
       name: height
       description: Height of result image
       schema:
         type: number
       in: query
-    ColorLight:
+    color_light:
       name: color_light
       description: Background color
       example: null
       schema:
         type: string
       in: query
-    ColorDark:
+    color_dark:
       name: color_dark
       description: Color of code
       example: null
@@ -6991,6 +7548,15 @@ components:
         items:
           $ref: "#/components/schemas/ContactID"
       required: true
+    ContactLID:
+      name: ContactLID
+      style: simple
+      explode: false
+      description: Contact LID
+      schema:
+        $ref: "#/components/schemas/ContactLID"
+      in: path
+      required: true
     EntryID:
       name: EntryID
       style: simple
@@ -7059,8 +7625,8 @@ components:
         $ref: "#/components/schemas/NewsletterID"
       in: path
       required: true
-    role:
-      name: user role
+    user_role:
+      name: user_role
       description: User's role regarding the newsletter
       schema:
         type: string
@@ -7100,6 +7666,15 @@ components:
       description: Media ID
       schema:
         $ref: "#/components/schemas/MediaID"
+      in: path
+      required: true
+    ContactIdOrLid:
+      name: ContactIdOrLid
+      style: simple
+      explode: false
+      description: Contact ID or LID
+      schema:
+        $ref: "#/components/schemas/ContactIDOrLid"
       in: path
       required: true
     ProductID:
@@ -7210,6 +7785,7 @@ components:
             on_call_pager: <WA_ID of valid WhatsApp contact>
             pass_through: false
             sent_status: false
+            auto_read_messages: false
             proxy: socks5://login:password@167.160.89.124:10030
     WebhookTest:
       description: Options for webhook test
@@ -7397,6 +7973,12 @@ components:
             about: Some Cool About
             icon: https://pps.whatsapp.net/v/...
       description: OK
+    AccountRegistrationDate:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AccountRegistrationDate"
+      description: Account registration date
     Messages:
       content:
         application/json:
@@ -7451,6 +8033,12 @@ components:
           schema:
             $ref: "#/components/schemas/Lid"
       description: User LID information
+    ContactID:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ContactIDResponse"
+      description: User ID information
     Presence:
       content:
         application/json:
@@ -7650,6 +8238,18 @@ components:
           schema:
             $ref: "#/components/schemas/BusinessCollection"
       description: Business Collection
+    ReachoutTimelock:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ReachoutTimelock"
+      description: OK
+    NewChatLimit:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NewChatLimit"
+      description: OK
     Labels:
       content:
         application/json:
@@ -7819,7 +8419,7 @@ components:
         health:
           $ref: "#/components/schemas/Health"
         user:
-          $ref: "#/components/schemas/Contact"
+          $ref: "#/components/schemas/WebhookUser"
         errors:
           type: array
           items:
@@ -7835,13 +8435,43 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Event"
+    LoginPasskeyRequest:
+      title: Login Passkey Request
+      description: Request to complete a pending passkey login challenge.
+      type: object
+      required:
+        - request_id
+      properties:
+        request_id:
+          type: string
+          description: Pending passkey request id returned by /users/login/rowdata.
+        timeout_ms:
+          type: number
+          description: Optional passkey completion timeout in milliseconds.
+          example: 60000
+    LoginPasskeyPasteRequest:
+      title: Login Passkey Paste Request
+      description: Request to complete a pending passkey login challenge with a pasted
+        WebAuthn response.
+      type: object
+      required:
+        - request_id
+        - response
+      properties:
+        request_id:
+          type: string
+          description: Pending passkey request id returned by /users/login/rowdata.
+        response:
+          type: object
+          description: WebAuthn assertion response JSON copied from the browser console
+            helper.
     UserProfileUpdate:
       title: UserProfile request body
       type: object
       properties:
         name:
           type: string
-          description: Update user name.
+          description: Update user name. Not works on WhatsApp Business.
           minLength: 3
           maxLength: 25
         about:
@@ -7849,6 +8479,7 @@ components:
           description: Update user info in About section.
           minLength: 1
           maxLength: 139
+          deprecated: true
         icon:
           type: string
           description: Update user icon in base64/url.
@@ -8034,6 +8665,26 @@ components:
       allOf:
         - $ref: "#/components/schemas/Sender"
         - $ref: "#/components/schemas/MessagePropsPoll"
+    SenderQuiz:
+      title: Message quiz send parameters
+      type: object
+      required:
+        - to
+        - title
+        - options
+        - correct_option_index
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessagePropsQuiz"
+    SenderQuestion:
+      title: Message question send parameters
+      type: object
+      required:
+        - to
+        - body
+      allOf:
+        - $ref: "#/components/schemas/Sender"
+        - $ref: "#/components/schemas/MessagePropsQuestion"
     SenderInteractive:
       title: Message interactive send parameters
       type: object
@@ -8083,6 +8734,10 @@ components:
               description: List of contacts to exclude
               items:
                 $ref: "#/components/schemas/ContactID"
+            allow_reshare:
+              type: boolean
+              description: Allow viewers to reshare the story
+              default: true
             background_color:
               type: string
               description: Background color of the story (ARGB)
@@ -8127,6 +8782,10 @@ components:
               description: List of contacts to exclude
               items:
                 $ref: "#/components/schemas/ContactID"
+            allow_reshare:
+              type: boolean
+              description: Allow viewers to reshare the story
+              default: true
             background_color:
               type: string
               description: Background color of the story (ARGB)
@@ -8152,6 +8811,10 @@ components:
               description: List of contacts to exclude
               items:
                 $ref: "#/components/schemas/ContactID"
+            allow_reshare:
+              type: boolean
+              description: Allow viewers to reshare the story
+              default: true
     SenderStoriesText:
       title: Stories post parameters
       type: object
@@ -8168,6 +8831,10 @@ components:
           description: List of contacts to exclude
           items:
             $ref: "#/components/schemas/ContactID"
+        allow_reshare:
+          type: boolean
+          description: Allow viewers to reshare the story
+          default: true
         caption:
           description: Optional. Text caption under the media.
           type: string
@@ -8235,6 +8902,69 @@ components:
             - month
           type: string
           example: 2592000
+    CommentToMessage:
+      title: Comment to message
+      type: object
+      properties:
+        body:
+          type: string
+          description: Text comment body
+      required:
+        - body
+    SentMessage:
+      title: Sent message
+      type: object
+      required:
+        - sent
+      properties:
+        sent:
+          type: boolean
+          description: Message sent
+          example: true
+        message:
+          $ref: "#/components/schemas/Message"
+    SenderEvent:
+      title: Event message send parameters
+      type: object
+      required:
+        - to
+        - title
+        - startTime
+      allOf:
+        - properties:
+            to:
+              type: string
+              description: Use the phone number or [Chat
+                ID](https://support.whapi.cloud/help-desk/faq/chat-id.-what-is-it-and-how-to-get-it)
+                of the contact/group/channel to which you want to send the
+                message. Use [Get
+                groups](https://whapi.readme.io/reference/getgroups) to get the
+                group ID.
+              pattern: ^[\d-]{10,31}(@[\w\.]{1,})?$
+              example: 1234567891@g.us
+            title:
+              type: string
+              description: Event name.
+            description:
+              type: string
+              description: Event description.
+            startTime:
+              type: number
+              description: Start time (format timestamp)
+            endTime:
+              type: number
+              description: End time (format timestamp)
+            degreesLatitude:
+              type: number
+              format: double
+            degreesLongitude:
+              type: number
+              format: double
+            locationName:
+              type: string
+            locationAddress:
+              type: string
+        - $ref: "#/components/schemas/ViewOnce"
     ArchiveChatRequest:
       title: Archive chat request parameters
       type: object
@@ -8328,6 +9058,13 @@ components:
           type: string
       required:
         - name
+    ContactAbout:
+      title: ContactAbout response
+      type: object
+      properties:
+        about:
+          type: string
+          description: WhatsApp profile About text.
     SendMePresenceRequest:
       title: Send me presence request
       required:
@@ -8896,6 +9633,16 @@ components:
         - id
         - name
         - color
+    RenameLabel:
+      title: Rename Label Request
+      type: object
+      properties:
+        name:
+          type: string
+          description: Label name
+          minLength: 1
+      required:
+        - name
     CreateCommunityRequest:
       title: Create community request
       type: object
@@ -8991,7 +9738,7 @@ components:
       type: object
       properties:
         callFrom:
-          $ref: "#/components/schemas/ContactID"
+          $ref: "#/components/schemas/ContactIDOrLid"
       required:
         - callFrom
     CreateGroupCallLinkRequest:
@@ -9006,11 +9753,11 @@ components:
     ChatID:
       type: string
       description: Chat ID
-      pattern: ^[\d-]{10,31}@[\w\.]{1,}$
+      pattern: ^(?:0@(?:c\.us|s\.whatsapp\.net)|[\d-]{10,31}@[\w\.]{1,})$
     ContactID:
       type: string
       description: Contact ID
-      pattern: ^([\d]{7,15})?$
+      pattern: ^([\d]{7,15})?(@lid|@s.whatsapp.net)?$
     CallID:
       type: string
       description: Call ID
@@ -9021,6 +9768,14 @@ components:
       type: string
       description: Group ID
       pattern: ^[\d-]{10,31}@g\.us$
+    ContactIDOrLid:
+      type: string
+      description: Contact ID or LID
+      pattern: ^\d{7,15}(@lid)?$
+    ContactLID:
+      type: string
+      description: Contact LID
+      pattern: ^[\d]{7,15}@lid$
     InviteCode:
       type: string
       description: Invite code
@@ -9047,7 +9802,7 @@ components:
     MessageID:
       type: string
       description: Message ID
-      pattern: ^[A-Za-z0-9._]{4,30}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{2,10})?$
+      pattern: ^[A-Za-z0-9._]{4,30}-[A-Za-z0-9._]{4,30}(-[A-Za-z0-9._]{2,30})?(-[A-Za-z0-9._]{2,30})?$
     NewsletterID:
       type: string
       description: Newsletter ID
@@ -9098,6 +9853,10 @@ components:
       title: Channel Settings
       type: object
       properties:
+        pdo_sync:
+          description: It is recommended to disable it for iOS.
+          type: boolean
+          default: true
         callback_backoff_delay_ms:
           description: Backoff delay for a failed callback in milliseconds This setting is
             used to configure the amount of time the backoff delays before
@@ -9126,7 +9885,7 @@ components:
             from WhatsApp. This can help maintain anonymity and ensure smooth
             operation.
           type: string
-          pattern: ^socks5h?:\/\/([!-\/:-@[-`{-~a-zA-Z0-9_-]+):([a-zA-Z0-9_-]+)@(((?:[0-9]{1,3}\.){3}[0-9]{1,3})|[a-zA-Z0-9.]+):([0-9]{1,5})$|^$
+          pattern: ^socks5h?:\/\/(\S+):(\S+)@(((?:[0-9]{1,3}\.){3}[0-9]{1,3})|[a-zA-Z0-9.-]+):([0-9]{1,5})$|^$
         mobile_proxy:
           description: Service proxy for mobile authorization. Beta-only parameter;
             ignored in the production version.
@@ -9143,6 +9902,28 @@ components:
             accounts to run faster. Working after reconnect.
           default: false
           type: boolean
+        auto_read_messages:
+          description: When enabled, all incoming messages are automatically marked as
+            read as soon as they are received by the API channel. You do not
+            need to mark each message as read manually through the API.
+          default: false
+          type: boolean
+        mock_pairing_code:
+          description: Fixed 8-character pairing code for link-code authorization. When
+            omitted or empty, a random code is generated for every request.
+          type: string
+        ignored_presences:
+          description: List of presences to ignore.
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatID"
+        data_mode:
+          description: Data presentation mode
+          type: string
+          enum:
+            - original
+            - replace
+            - extend
     MediaWithUploadFromUrl:
       title: Media with upload from URL
       description: Media file URL for upload
@@ -9170,6 +9951,19 @@ components:
         - url
         - type
         - mode
+    AccountRegistrationDate:
+      title: AccountRegistrationDate
+      type: object
+      properties:
+        creation:
+          description: Account creation timestamp in milliseconds
+          type: integer
+        last_registration:
+          description: Last account registration timestamp in milliseconds
+          type: integer
+      required:
+        - creation
+        - last_registration
     AuthCode:
       title: Auth code
       description: The auth code is the code that is sent to the user's phone app to
@@ -9237,6 +10031,9 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/ChatID"
+        phone:
+          type: string
+          description: Phone number
         name:
           type: string
           description: Chat name
@@ -9250,6 +10047,8 @@ components:
             - contact
             - broadcast
             - newsletter
+            - stories
+            - announcement
             - unknown
         timestamp:
           type: integer
@@ -9393,6 +10192,8 @@ components:
               type: number
               description: Group ephemeral timer
               example: 0
+            performed_by:
+              $ref: "#/components/schemas/ChatID"
             invite_code:
               type: string
               description: Group invite code
@@ -9455,6 +10256,9 @@ components:
         id:
           type: string
           description: WA ID
+        phone:
+          type: string
+          description: Phone number
         name:
           type: string
           description: Contact title from contact book
@@ -9473,12 +10277,23 @@ components:
         status:
           type: string
           description: Contact status
+        phonebook:
+          type: boolean
+          description: If true, the contact is present in the WhatsApp address book on the
+            primary phone
         saved:
           type: boolean
-          description: If true - the contact is saved in the contact list
+          deprecated: true
+          description: Deprecated alias for phonebook
       required:
         - id
         - name
+    ContactIDResponse:
+      title: Contact ID
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/ContactID"
     ContactIDList:
       title: Contacts
       type: array
@@ -9688,6 +10503,9 @@ components:
         from:
           description: WhatsApp ID of the sender
           type: string
+        phone:
+          type: string
+          description: Phone number of the sender
         from_me:
           type: boolean
           description: Is message from me
@@ -9736,6 +10554,10 @@ components:
           $ref: "#/components/schemas/MessageContentInteractive"
         poll:
           $ref: "#/components/schemas/MessageContentPoll"
+        quiz:
+          $ref: "#/components/schemas/MessageContentQuiz"
+        question:
+          $ref: "#/components/schemas/MessageContentQuestion"
         hsm:
           $ref: "#/components/schemas/MessageContentHSM"
         system:
@@ -9764,6 +10586,9 @@ components:
           $ref: "#/components/schemas/MessageContentList"
         buttons:
           $ref: "#/components/schemas/MessageContentButtons"
+        starred:
+          type: boolean
+          description: Is message starred
         reactions:
           type: array
           items:
@@ -9802,6 +10627,74 @@ components:
           type: integer
           format: int32
           description: The index of the last message
+    NewChatLimit:
+      title: New chat limit
+      type: object
+      properties:
+        limit:
+          type: number
+          description: Number of new individual chats allowed in the current cycle. -1
+            means WhatsApp did not report a limit.
+        used:
+          type: number
+          description: Number of new individual chats already used in the current cycle.
+            -1 means WhatsApp did not report usage.
+        remaining:
+          type: number
+          description: Number of new individual chats remaining in the current cycle. -1
+            means unavailable.
+        cycle_start_at:
+          type: number
+          nullable: true
+          description: Unix timestamp in seconds when the current cycle starts. Null means
+            WhatsApp did not report a usable timestamp.
+        cycle_end_at:
+          type: number
+          nullable: true
+          description: Unix timestamp in seconds when the current cycle ends. Null means
+            WhatsApp did not report a usable timestamp.
+        updated_at:
+          type: number
+          nullable: true
+          description: Unix timestamp in seconds when WhatsApp reported this state. Null
+            means WhatsApp did not report a usable timestamp.
+        status:
+          type: string
+          description: WhatsApp status for the new chat limit.
+          enum:
+            - none
+            - first_warning
+            - second_warning
+            - capped
+          example: none
+        ote_status:
+          type: string
+          description: WhatsApp one-time extension status for the new chat limit.
+          enum:
+            - not_eligible
+            - eligible
+            - active_in_current_cycle
+            - exhausted
+          example: eligible
+        mv_status:
+          type: string
+          description: WhatsApp multi-verification status for the new chat limit.
+          enum:
+            - not_eligible
+            - not_active
+            - active
+            - active_upgrade_available
+          example: not_active
+      required:
+        - limit
+        - used
+        - remaining
+        - cycle_start_at
+        - cycle_end_at
+        - updated_at
+        - status
+        - ote_status
+        - mv_status
     NewslettersList:
       title: List of newsletters
       type: object
@@ -9878,18 +10771,45 @@ components:
             products:
               $ref: "#/components/schemas/Products"
         - $ref: "#/components/schemas/Iterator"
-    SentMessage:
-      title: Sent message
+    ReachoutTimelock:
+      title: Reachout timelock
       type: object
-      required:
-        - sent
       properties:
-        sent:
+        is_active:
           type: boolean
-          description: Message sent
-          example: true
-        message:
-          $ref: "#/components/schemas/Message"
+          description: Whether the account is currently limited from starting chats.
+        ends_at:
+          type: number
+          nullable: true
+          description: Unix timestamp in seconds when the limit ends, if reported.
+        type:
+          type: string
+          description: WhatsApp limit type.
+          enum:
+            - default
+            - biz_quality
+            - biz_commerce_violation_adult
+            - biz_commerce_violation_alcohol
+            - biz_commerce_violation_animals
+            - biz_commerce_violation_body_parts_fluids
+            - biz_commerce_violation_dating
+            - biz_commerce_violation_digital_services_products
+            - biz_commerce_violation_drugs
+            - biz_commerce_violation_drugs_only_otc
+            - biz_commerce_violation_gambling
+            - biz_commerce_violation_healthcare
+            - biz_commerce_violation_real_fake_currency
+            - biz_commerce_violation_supplements
+            - biz_commerce_violation_tobacco
+            - biz_commerce_violation_violent_content
+            - biz_commerce_violation_weapons
+            - web_companion_only
+            - restrict_all_companions
+          example: default
+      required:
+        - is_active
+        - ends_at
+        - type
     StatusesList:
       title: List of view statuses
       type: object
@@ -9933,6 +10853,9 @@ components:
               - sent_status
               - proxy
               - mobile_proxy
+              - ignored_presences
+              - auto_read_messages
+              - mock_pairing_code
     QR:
       title: QR code
       type: object
@@ -9948,15 +10871,43 @@ components:
             - TIMEOUT
             - WAITING
             - ERROR
+        type:
+          type: string
+          description: Login challenge type. QR means scan rowdata/base64, code means
+            enter code on the phone, webauthn means complete the passkey
+            assertion.
+          enum:
+            - qr
+            - code
+            - webauthn
         base64:
           type: string
-          description: Base64 encoded QR code
+          description: Base64 encoded login image
         rowdata:
           type: string
           description: Rowdata for generating the QR code
+        code:
+          type: string
+          description: Passkey verification code to enter on the phone
+        request_id:
+          type: string
+          description: Pending passkey request id. Send the WebAuthn response back for the
+            same request.
+        public_key:
+          type: object
+          description: PublicKeyCredentialRequestOptions JSON for
+            navigator.credentials.get({ publicKey }).
+        url:
+          type: string
+          description: Origin that must be used for the WebAuthn ceremony.
+          example: https://web.whatsapp.com
+        console_script:
+          type: string
+          description: Browser console helper that runs navigator.credentials.get on the
+            required origin and prints the response JSON.
         expire:
           type: number
-          description: Seconds until the QR code expires
+          description: Seconds until the login challenge expires
       required:
         - status
     UserProfile:
@@ -9965,7 +10916,16 @@ components:
       properties:
         name:
           type: string
-          description: User name.
+          description: Profile/account name for your own profile, or the name saved in the
+            local address book for other contacts.
+        push_name:
+          type: string
+          description: Profile name set by the user, when it is already known from local
+            WhatsApp state.
+        verified_name:
+          type: string
+          description: Verified business profile name, when it is already known from local
+            WhatsApp state.
         about:
           type: string
           description: User info in About section.
@@ -10253,6 +11213,8 @@ components:
         - interactive
         - reply
         - poll
+        - quiz
+        - question
         - hsm
         - order
         - story
@@ -10261,6 +11223,7 @@ components:
         - list
         - pin
         - carousel
+        - album
     MessageSource:
       default: text
       type: string
@@ -10515,6 +11478,37 @@ components:
               items:
                 $ref: "#/components/schemas/PollResults"
         - $ref: "#/components/schemas/ViewOnce"
+    MessageContentQuiz:
+      title: Message content quiz
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/MessagePollResults"
+        - properties:
+            correct_answer:
+              type: string
+              description: Correct option for quiz
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/PollResults"
+        - $ref: "#/components/schemas/ViewOnce"
+    MessageContentQuestion:
+      title: Message content question
+      type: object
+      properties:
+        body:
+          type: string
+          description: Question text
+          example: What do you think?
+        total:
+          type: integer
+          description: Total count of responses
+          example: 1
+        responses:
+          type: array
+          description: Question responses
+          items:
+            $ref: "#/components/schemas/QuestionAnswer"
     MessageContentHSM:
       title: Message content HSM
       type: object
@@ -10657,10 +11651,16 @@ components:
             - reaction
             - ephemeral
             - vote
+            - result
             - comment
             - event_response
+            - answer
             - pin
             - unpin
+            - label_change
+            - media_notify
+            - status_notify
+            - group_status_notify
         emoji:
           description: Action emoji for reaction
           type: string
@@ -10676,11 +11676,15 @@ components:
           description: List of poll options
           items:
             type: string
+        result:
+          $ref: "#/components/schemas/QuizResult"
         comment:
           type: string
           description: Comment
         event_response:
           $ref: "#/components/schemas/EventResponse"
+        answer:
+          $ref: "#/components/schemas/QuestionAnswer"
     MessageContext:
       title: Message context
       description: ""
@@ -10702,6 +11706,9 @@ components:
           $ref: "#/components/schemas/MessageContextAD"
         conversion:
           $ref: "#/components/schemas/MessageContextConversion"
+        paid_partnership:
+          type: boolean
+          description: True if a WhatsApp Channel message is labelled as a paid partnership
         quoted_id:
           type: string
           description: ID of quoted message
@@ -10839,7 +11846,24 @@ components:
         - $ref: "#/components/schemas/MessageContentContacts"
         - $ref: "#/components/schemas/MessageContentInteractive"
         - $ref: "#/components/schemas/MessageContentPoll"
+        - $ref: "#/components/schemas/MessageContentQuiz"
+        - $ref: "#/components/schemas/MessageContentQuestion"
         - $ref: "#/components/schemas/MessageContentReply"
+    QuizResult:
+      title: Quiz result
+      type: object
+      properties:
+        participant:
+          $ref: "#/components/schemas/ContactID"
+        answers:
+          type: array
+          description: Selected quiz answers
+          items:
+            type: string
+        timestamp:
+          type: integer
+          description: Response timestamp
+          example: 1675964377
     EventResponse:
       title: Message content event
       type: object
@@ -10854,6 +11878,20 @@ components:
             - UNKNOWN
             - GOING
             - NOT_GOING
+        timestamp:
+          type: integer
+          description: Response timestamp
+          example: 1675964377
+    QuestionAnswer:
+      title: Question answer
+      type: object
+      properties:
+        participant:
+          $ref: "#/components/schemas/ContactID"
+        text:
+          type: string
+          description: Answer text
+          example: Some answer
         timestamp:
           type: integer
           description: Response timestamp
@@ -11023,6 +12061,8 @@ components:
           $ref: "#/components/schemas/InteractiveType"
       required:
         - action
+        - type
+        - body
     MessagePropsLinkPreview:
       title: Preview link send parameters
       description: If 'body' contains a link, this props can be used to create custom
@@ -11224,6 +12264,15 @@ components:
           type: integer
           description: Number of selectable options in poll (1 - can choose only one
             option, 0 - any number of options)
+        end_time:
+          type: integer
+          description: Poll end timestamp
+        hide_participant_name:
+          type: boolean
+          description: Hide participant names in poll results
+        allow_add_option:
+          type: boolean
+          description: Allow participants to add options
         total:
           type: integer
           description: Total count of selected options
@@ -11531,11 +12580,11 @@ components:
         quoted:
           type: string
           description: Message ID of the message to be quoted
-          pattern: ^[A-Za-z0-9._]{4,30}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{2,10})?$
+          pattern: ^[A-Za-z0-9._]{4,30}-[A-Za-z0-9._]{4,30}(-[A-Za-z0-9._]{2,30})?(-[A-Za-z0-9._]{2,30})?$
         edit:
           type: string
           description: Message ID of the message to be edited
-          pattern: ^[A-Za-z0-9._]{4,30}-[A-Za-z0-9._]{4,14}(-[A-Za-z0-9._]{4,10})?(-[A-Za-z0-9._]{2,10})?$
+          pattern: ^[A-Za-z0-9._]{4,30}-[A-Za-z0-9._]{4,30}(-[A-Za-z0-9._]{2,30})?(-[A-Za-z0-9._]{2,30})?$
     SendMedia:
       title: Message media file parameters for send
       description: >
@@ -11588,7 +12637,7 @@ components:
           type: array
           items:
             type: string
-            pattern: ^\d{7,15}(@s\.whatsapp\.net)?$|^\d{10,31}@g\.us$
+            pattern: ^\d{7,15}(@(s\.whatsapp\.net|lid))?$|^\d{10,31}@g\.us$
           description: The numbers of the mentioned users
     MessagePropsGif:
       title: Message gif unique parameters
@@ -11623,6 +12672,46 @@ components:
       required:
         - title
         - options
+    MessagePropsQuestion:
+      title: Message question unique parameters
+      type: object
+      properties:
+        body:
+          type: string
+          description: Question text
+      required:
+        - body
+    MessagePropsQuiz:
+      title: Message quiz unique parameters
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of quiz
+        options:
+          type: array
+          description: Options of quiz
+          items:
+            type: string
+          minItems: 2
+          maxItems: 12
+        correct_option_index:
+          type: integer
+          description: Zero-based index of the correct quiz option
+          minimum: 0
+        end_time:
+          type: integer
+          description: Quiz end timestamp
+        hide_participant_name:
+          type: boolean
+          description: Hide participant names in quiz results
+        allow_add_option:
+          type: boolean
+          description: Allow participants to add options
+      required:
+        - title
+        - options
+        - correct_option_index
     MediaSettings:
       title: Media
       type: object
@@ -11822,6 +12911,37 @@ components:
           description: The latency of the call in milliseconds.
           type: integer
           format: int64
+    WebhookUser:
+      title: Webhook user
+      type: object
+      description: User account payload for users.post and users.delete webhook events.
+      properties:
+        id:
+          type: string
+          description: WA ID
+        phone:
+          type: string
+          description: Phone number
+        name:
+          type: string
+          description: User display name
+        pushname:
+          type: string
+          description: Account name from WA or WA Business name
+        is_business:
+          type: boolean
+          description: Is a business account
+        profile_pic:
+          type: string
+          description: Profile picture URL
+        profile_pic_full:
+          type: string
+          description: Profile full picture URL
+        status:
+          type: string
+          description: User status
+      required:
+        - id
     Webhook:
       title: Webhook
       type: object
@@ -11870,6 +12990,17 @@ components:
       title: WebhookParameters
       type: object
       properties:
+        send_undecrypted_ad:
+          description: Send a webhook for an ad that could not be decrypted.
+          type: boolean
+          default: false
+        webhook_max_age_seconds:
+          description: Time in seconds. If the message is delayed more than this time, the
+            hook will not be sent.
+          type: number
+          maximum: 172800
+          minimum: 15
+          nullable: true
         headers:
           type: object
           description: 'Additional headers for webhook. Max 5 headers. <br/>Example:
